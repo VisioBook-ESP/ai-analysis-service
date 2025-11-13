@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 from typing import Optional, Dict
