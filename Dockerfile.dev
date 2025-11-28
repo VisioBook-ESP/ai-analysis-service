@@ -1,0 +1,37 @@
+# Image Python 3.12
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copie et installation du requirements
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install torch==2.9.0 torchvision==0.24.0 --index-url https://download.pytorch.org/whl/cu126 && \
+    pip install -r requirements.txt --no-deps || pip install -r requirements.txt
+
+# Copie du source code
+COPY src ./src
+COPY .env .env
+
+RUN mkdir -p data models
+
+# Port expose
+EXPOSE 8083
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8083/health || exit 1
+
+# Commande de demarrage avec hot-reload pour le developpement
+CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8083", "--reload"]
