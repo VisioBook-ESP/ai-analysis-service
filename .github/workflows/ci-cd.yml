@@ -16,7 +16,7 @@ permissions:
 env:
   PYTHON_VERSION: "3.12"
   IMAGE_REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/${{ github.repository }}
+  IMAGE_NAME: ghcr.io/${{ github.repository }}-dev
   DOCKERFILE_PROD: Dockerfile
 
 jobs:
