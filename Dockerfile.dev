@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && curl --version
 
 # Copie et installation du requirements (dev inclut prod)
 COPY requirements-prod.txt requirements-dev.txt ./
