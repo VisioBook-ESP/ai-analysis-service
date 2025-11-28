@@ -144,7 +144,6 @@ def _check_pytorch() -> bool:
 def _check_transformers() -> bool:
     """Verifie que transformers (Hugging Face) est disponible."""
     try:
-        from transformers import pipeline
 
         return True
     except Exception:

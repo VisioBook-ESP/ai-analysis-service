@@ -12,7 +12,7 @@ def noise_score(text: str) -> Dict[str, float]:
             "punct_ratio": 0.0,
             "upper_ratio": 0.0,
             "avg_sent_len": 0.0,
-            "url_ratio": 0.0
+            "url_ratio": 0.0,
         }
 
     n = len(text)
@@ -46,13 +46,17 @@ def noise_score(text: str) -> Dict[str, float]:
     else:
         f_sent = 0.0
 
-    score = max(0.0, min(1.0,
-        0.35 * f_non +
-        0.20 * f_punct +
-        0.20 * f_upper +
-        0.15 * f_url +
-        0.10 * f_sent
-    ))
+    score = max(
+        0.0,
+        min(
+            1.0,
+            0.35 * f_non
+            + 0.20 * f_punct
+            + 0.20 * f_upper
+            + 0.15 * f_url
+            + 0.10 * f_sent,
+        ),
+    )
 
     return {
         "score": round(score, 3),

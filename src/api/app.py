@@ -29,9 +29,9 @@ def root():
             },
             "analysis": {
                 "analyze": "/api/v1/analyze",
-                "analyze_batch": "/api/v1/analyze/batch"
-            }
-        }
+                "analyze_batch": "/api/v1/analyze/batch",
+            },
+        },
     }
 
 

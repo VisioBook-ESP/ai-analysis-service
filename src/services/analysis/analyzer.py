@@ -16,7 +16,7 @@ class AnalysisOptions:
         mask_pii: bool = True,
         remove_links: bool = False,
         return_embeddings: bool = False,
-        max_summary_length: int = 150
+        max_summary_length: int = 150,
     ):
         self.semantic = semantic
         self.scenes = scenes
@@ -39,7 +39,7 @@ class Analyzer:
         self,
         text: str,
         language: str = "auto",
-        options: Optional[AnalysisOptions] = None
+        options: Optional[AnalysisOptions] = None,
     ) -> Dict[str, Any]:
         if options is None:
             options = AnalysisOptions()
@@ -50,7 +50,7 @@ class Analyzer:
             text,
             language=language,
             mask_pii=options.mask_pii,
-            remove_links=options.remove_links
+            remove_links=options.remove_links,
         )
 
         results = {
@@ -61,29 +61,28 @@ class Analyzer:
                 "sentence_count": len(preprocessed["sentences"]),
                 "word_count": len(preprocessed["text"].split()),
                 "quality_score": preprocessed["quality"]["score"],
-                "quality_assessment": preprocessed["quality"].get("assessment", "unknown")
-            }
+                "quality_assessment": preprocessed["quality"].get(
+                    "assessment", "unknown"
+                ),
+            },
         }
 
         semantic_result = None
         if options.semantic:
             semantic_result = self.semantic_analyzer.analyze(
-                preprocessed,
-                return_embeddings=options.return_embeddings
+                preprocessed, return_embeddings=options.return_embeddings
             )
             results["semantic"] = semantic_result
 
         if options.scenes:
             scene_result = self.scene_extractor.extract(
-                preprocessed,
-                semantic_data=semantic_result
+                preprocessed, semantic_data=semantic_result
             )
             results["scenes"] = scene_result
 
         if options.summarize:
             summary_result = self.summarizer.summarize(
-                preprocessed,
-                max_length=options.max_summary_length
+                preprocessed, max_length=options.max_summary_length
             )
             results["summary"] = summary_result
 
