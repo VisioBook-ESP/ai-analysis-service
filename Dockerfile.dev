@@ -14,11 +14,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copie et installation du requirements
-COPY requirements.txt .
+# Copie et installation du requirements (dev inclut prod)
+COPY requirements-prod.txt requirements-dev.txt ./
 RUN pip install --upgrade pip && \
     pip install torch==2.9.0 torchvision==0.24.0 --index-url https://download.pytorch.org/whl/cu126 && \
-    pip install -r requirements.txt --no-deps || pip install -r requirements.txt
+    pip install -r requirements-dev.txt --no-deps || pip install -r requirements-dev.txt
 
 # Copie du source code
 COPY src ./src

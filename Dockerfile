@@ -13,10 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Installation des dépendances Python
-COPY requirements.txt .
+COPY requirements-prod.txt .
 RUN pip install --upgrade pip && \
     pip install torch==2.9.0 torchvision==0.24.0 --index-url https://download.pytorch.org/whl/cu126 && \
-    pip install -r requirements.txt --no-deps || pip install -r requirements.txt
+    pip install -r requirements-prod.txt --no-deps || pip install -r requirements-prod.txt
 
 FROM python:3.12-slim
 

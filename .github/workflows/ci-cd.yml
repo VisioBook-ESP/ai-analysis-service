@@ -18,7 +18,6 @@ env:
   IMAGE_REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/${{ github.repository }}
   DOCKERFILE_PROD: Dockerfile
-  DOCKERFILE_DEV: Dockerfile.dev
 
 jobs:
   formatage-check:
@@ -141,25 +140,13 @@ jobs:
           tags: |
             type=raw,value=latest
 
-      - name: Build and push prod image
+      - name: Build and push production image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ${{ env.DOCKERFILE_PROD }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push dev image
-        if: github.ref == 'refs/heads/dev'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ env.DOCKERFILE_DEV }}
-          push: true
-          tags: ${{ env.IMAGE_REGISTRY }}:dev
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
