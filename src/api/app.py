@@ -1,6 +1,7 @@
 from fastapi import FastAPI
+from fastapi.responses import ORJSONResponse
 from src.api.routes.health import router as health_router
-from src.api.routes.preprocessing import router as preprocessing_router
+from src.api.routes.analysis import router as analysis_router
 from src.config.settings import get_settings
 
 settings = get_settings()
@@ -9,6 +10,7 @@ app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     description="Service d'analyse IA pour extraction d'informations textuelles et generation de prompts image",
+    default_response_class=ORJSONResponse,
 )
 
 
@@ -25,21 +27,13 @@ def root():
                 "readiness": "/ready",
                 "metrics": "/metrics",
             },
-            "preprocessing": {
-                "preprocess": "/api/v1/preprocessing/preprocess",
-                "batch": "/api/v1/preprocessing/preprocess/batch",
-                "info": "/api/v1/preprocessing/preprocess/info",
-            },
-        },
+            "analysis": {
+                "analyze": "/api/v1/analyze",
+                "analyze_batch": "/api/v1/analyze/batch"
+            }
+        }
     }
 
 
-# Routes healthchecks
 app.include_router(health_router, tags=["health"])
-
-# Routes preprocessing
-app.include_router(
-    preprocessing_router,
-    prefix="/api/v1/preprocessing",
-    tags=["preprocessing"]
-)
+app.include_router(analysis_router, prefix="/api/v1", tags=["analysis"])
