@@ -5,6 +5,7 @@ from functools import lru_cache
 try:
     from transformers import pipeline
     import torch
+
     _TRANSFORMERS_AVAILABLE = True
 except ImportError:
     _TRANSFORMERS_AVAILABLE = False
@@ -25,7 +26,7 @@ class ZeroShotClassifier:
                 self.classifier = pipeline(
                     "zero-shot-classification",
                     model="MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
-                    device=device
+                    device=device,
                 )
             except Exception:
                 pass
@@ -48,7 +49,7 @@ class ZeroShotClassifier:
         import re
 
         # Split into sentences
-        sentences = re.split(r'[.!?]+', text)
+        sentences = re.split(r"[.!?]+", text)
 
         # Filter to sentences mentioning this character
         relevant_sentences = []
@@ -62,22 +63,29 @@ class ZeroShotClassifier:
 
         # Return relevant context or fallback to full text
         if relevant_sentences:
-            return ' '.join(relevant_sentences)
+            return " ".join(relevant_sentences)
         return text[:200]  # Fallback to first 200 chars
 
     def classify_emotions(
-        self,
-        text: str,
-        character_name: Optional[str] = None,
-        threshold: float = 0.5
+        self, text: str, character_name: Optional[str] = None, threshold: float = 0.5
     ) -> List[str]:
         if not self.classifier:
             return []
 
         emotion_labels = [
-            "happy", "sad", "nervous", "excited", "angry",
-            "calm", "passionate", "encouraging", "surprised",
-            "proud", "worried", "joyful", "fearful"
+            "happy",
+            "sad",
+            "nervous",
+            "excited",
+            "angry",
+            "calm",
+            "passionate",
+            "encouraging",
+            "surprised",
+            "proud",
+            "worried",
+            "joyful",
+            "fearful",
         ]
 
         if character_name:
@@ -93,9 +101,7 @@ class ZeroShotClassifier:
 
         try:
             result = self.classifier(
-                context,
-                candidate_labels=emotion_labels,
-                multi_label=True
+                context, candidate_labels=emotion_labels, multi_label=True
             )
 
             detected_emotions = []
@@ -115,18 +121,22 @@ class ZeroShotClassifier:
             return []
 
     def classify_traits(
-        self,
-        text: str,
-        character_name: str,
-        threshold: float = 0.75
+        self, text: str, character_name: str, threshold: float = 0.75
     ) -> List[str]:
         if not self.classifier:
             return []
 
         trait_labels = [
-            "young", "old", "tall", "elegant",
-            "slim", "beautiful", "handsome",
-            "well-dressed", "casual", "professional"
+            "young",
+            "old",
+            "tall",
+            "elegant",
+            "slim",
+            "beautiful",
+            "handsome",
+            "well-dressed",
+            "casual",
+            "professional",
         ]
 
         relevant_text = self._extract_character_context(text, character_name)
@@ -139,9 +149,7 @@ class ZeroShotClassifier:
 
         try:
             result = self.classifier(
-                context,
-                candidate_labels=trait_labels,
-                multi_label=True
+                context, candidate_labels=trait_labels, multi_label=True
             )
 
             detected_traits = []
@@ -160,17 +168,21 @@ class ZeroShotClassifier:
         except Exception:
             return []
 
-    def classify_atmosphere(
-        self,
-        text: str,
-        threshold: float = 0.35
-    ) -> str:
+    def classify_atmosphere(self, text: str, threshold: float = 0.35) -> str:
         if not self.classifier:
             return "neutral"
 
         atmosphere_labels = [
-            "bright", "dark", "warm", "cold", "peaceful",
-            "tense", "cheerful", "gloomy", "mysterious", "romantic"
+            "bright",
+            "dark",
+            "warm",
+            "cold",
+            "peaceful",
+            "tense",
+            "cheerful",
+            "gloomy",
+            "mysterious",
+            "romantic",
         ]
 
         # Check cache first
@@ -180,9 +192,7 @@ class ZeroShotClassifier:
 
         try:
             result = self.classifier(
-                text,
-                candidate_labels=atmosphere_labels,
-                multi_label=False
+                text, candidate_labels=atmosphere_labels, multi_label=False
             )
 
             atmosphere = "neutral"

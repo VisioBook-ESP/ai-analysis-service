@@ -5,6 +5,7 @@ from typing import Tuple, Dict, List
 
 try:
     import regex as re_unicode
+
     _REGEX_AVAILABLE = True
 except ImportError:
     re_unicode = None
@@ -17,8 +18,7 @@ def normalize_unicode(text: str) -> str:
 
 def strip_control_chars(text: str) -> str:
     return "".join(
-        ch for ch in text
-        if (ch in ['\n', '\t'] or unicodedata.category(ch)[0] != 'C')
+        ch for ch in text if (ch in ["\n", "\t"] or unicodedata.category(ch)[0] != "C")
     )
 
 
@@ -26,10 +26,10 @@ def replace_smart_quotes(text: str) -> str:
     replacements = {
         "\u2018": "'",
         "\u2019": "'",
-        "\u201C": '"',
-        "\u201D": '"',
-        "\u00AB": '"',
-        "\u00BB": '"',
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u00ab": '"',
+        "\u00bb": '"',
         "\u2013": "-",
         "\u2014": "-",
     }
@@ -82,10 +82,7 @@ def mask_pii(text: str) -> Tuple[str, Dict[str, List[str]]]:
 def strip_emojis(text: str) -> str:
     if _REGEX_AVAILABLE:
         return re_unicode.sub(r"\p{Emoji}+", "", text)
-    return "".join(
-        ch for ch in text
-        if unicodedata.category(ch) not in {"So", "Sk"}
-    )
+    return "".join(ch for ch in text if unicodedata.category(ch) not in {"So", "Sk"})
 
 
 def basic_clean(

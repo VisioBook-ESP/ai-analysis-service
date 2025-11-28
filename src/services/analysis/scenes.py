@@ -8,18 +8,97 @@ class SceneExtractor:
     def __init__(self):
         self.zero_shot = ZeroShotClassifier()
         self.visual_keywords = {
-            "colors": ["rouge", "bleu", "vert", "jaune", "noir", "blanc", "gris", "rose", "violet", "orange",
-                      "red", "blue", "green", "yellow", "black", "white", "gray", "pink", "purple", "orange"],
-            "lighting": ["lumineux", "lumineuse", "lumineuses", "sombre", "sombres", "clair", "claire", "claires",
-                        "obscur", "obscure", "obscures", "éclairé", "éclairée", "éclairées", "ombre", "soleil", "lune",
-                        "bright", "dark", "light", "shadow", "sun", "moon", "illuminated", "dim", "radiant"],
-            "places": ["salle", "chambre", "jardin", "rue", "forêt", "maison", "pièce", "dehors", "intérieur",
-                      "room", "garden", "street", "forest", "house", "outside", "inside"],
-            "actions": ["entre", "sort", "marche", "court", "regarde", "parle", "sourit", "pleure",
-                       "enter", "exit", "walk", "run", "look", "speak", "smile", "cry"]
+            "colors": [
+                "rouge",
+                "bleu",
+                "vert",
+                "jaune",
+                "noir",
+                "blanc",
+                "gris",
+                "rose",
+                "violet",
+                "orange",
+                "red",
+                "blue",
+                "green",
+                "yellow",
+                "black",
+                "white",
+                "gray",
+                "pink",
+                "purple",
+                "orange",
+            ],
+            "lighting": [
+                "lumineux",
+                "lumineuse",
+                "lumineuses",
+                "sombre",
+                "sombres",
+                "clair",
+                "claire",
+                "claires",
+                "obscur",
+                "obscure",
+                "obscures",
+                "éclairé",
+                "éclairée",
+                "éclairées",
+                "ombre",
+                "soleil",
+                "lune",
+                "bright",
+                "dark",
+                "light",
+                "shadow",
+                "sun",
+                "moon",
+                "illuminated",
+                "dim",
+                "radiant",
+            ],
+            "places": [
+                "salle",
+                "chambre",
+                "jardin",
+                "rue",
+                "forêt",
+                "maison",
+                "pièce",
+                "dehors",
+                "intérieur",
+                "room",
+                "garden",
+                "street",
+                "forest",
+                "house",
+                "outside",
+                "inside",
+            ],
+            "actions": [
+                "entre",
+                "sort",
+                "marche",
+                "court",
+                "regarde",
+                "parle",
+                "sourit",
+                "pleure",
+                "enter",
+                "exit",
+                "walk",
+                "run",
+                "look",
+                "speak",
+                "smile",
+                "cry",
+            ],
         }
 
-    def extract(self, preprocessed: Dict, semantic_data: Optional[Dict] = None) -> Dict[str, Any]:
+    def extract(
+        self, preprocessed: Dict, semantic_data: Optional[Dict] = None
+    ) -> Dict[str, Any]:
         sentences = preprocessed["sentences"]
         text = preprocessed["text"]
 
@@ -33,56 +112,80 @@ class SceneExtractor:
             scene["actions"] = self._extract_actions(scene)
             scene["visual_attributes"] = self._extract_visual_attributes(scene)
 
-        return {
-            "scene_count": len(scenes),
-            "scenes": scenes
-        }
+        return {"scene_count": len(scenes), "scenes": scenes}
 
-    def _detect_scenes(self, sentences: List[Dict], semantic_data: Optional[Dict]) -> List[Dict]:
+    def _detect_scenes(
+        self, sentences: List[Dict], semantic_data: Optional[Dict]
+    ) -> List[Dict]:
         scenes = []
         current_scene = {
             "scene_id": f"scene_{len(scenes)+1:03d}",
             "sentences": [],
-            "text": ""
+            "text": "",
         }
 
         for i, sentence in enumerate(sentences):
             current_scene["sentences"].append(sentence)
 
             if self._is_scene_break(sentence, i, sentences):
-                current_scene["text"] = " ".join([s["text"] for s in current_scene["sentences"]])
+                current_scene["text"] = " ".join(
+                    [s["text"] for s in current_scene["sentences"]]
+                )
                 scenes.append(current_scene)
 
                 current_scene = {
                     "scene_id": f"scene_{len(scenes)+1:03d}",
                     "sentences": [],
-                    "text": ""
+                    "text": "",
                 }
 
         if current_scene["sentences"]:
-            current_scene["text"] = " ".join([s["text"] for s in current_scene["sentences"]])
+            current_scene["text"] = " ".join(
+                [s["text"] for s in current_scene["sentences"]]
+            )
             scenes.append(current_scene)
 
         return scenes
 
-    def _is_scene_break(self, sentence: Dict, index: int, all_sentences: List[Dict]) -> bool:
+    def _is_scene_break(
+        self, sentence: Dict, index: int, all_sentences: List[Dict]
+    ) -> bool:
         text = sentence["text"].lower()
 
-        location_changes = ["entre dans", "sort de", "arrive à", "quitte", "va à",
-                           "enter", "leave", "arrive at", "go to"]
+        location_changes = [
+            "entre dans",
+            "sort de",
+            "arrive à",
+            "quitte",
+            "va à",
+            "enter",
+            "leave",
+            "arrive at",
+            "go to",
+        ]
         for change in location_changes:
             if change in text:
                 return True
 
-        time_changes = ["plus tard", "le lendemain", "soudain", "ensuite",
-                       "later", "next day", "suddenly", "then"]
+        time_changes = [
+            "plus tard",
+            "le lendemain",
+            "soudain",
+            "ensuite",
+            "later",
+            "next day",
+            "suddenly",
+            "then",
+        ]
         for change in time_changes:
             if change in text:
                 return True
 
         if len(all_sentences) > index + 1:
             next_sentence = all_sentences[index + 1]["text"].lower()
-            if next_sentence.startswith(("il", "elle", "ils", "elles", "he", "she", "they")):
+            if next_sentence.startswith(
+                ("il", "elle", "ils", "elles", "he", "she", "they")
+            ):
                 return False
 
         if index > 0 and index % 3 == 0:
@@ -90,7 +193,9 @@ class SceneExtractor:
 
         return False
 
-    def _extract_characters(self, scene: Dict, semantic_data: Optional[Dict]) -> List[Dict]:
+    def _extract_characters(
+        self, scene: Dict, semantic_data: Optional[Dict]
+    ) -> List[Dict]:
         characters = []
 
         # Extract generic character descriptions (e.g., "le jeune homme", "une belle femme")
@@ -98,16 +203,20 @@ class SceneExtractor:
         generic_characters = self._extract_generic_characters(scene["text"])
         for generic_char in generic_characters:
             # Check if not already detected
-            if not any(c["name"].lower() in generic_char["name"].lower() or
-                      generic_char["name"].lower() in c["name"].lower()
-                      for c in characters):
+            if not any(
+                c["name"].lower() in generic_char["name"].lower()
+                or generic_char["name"].lower() in c["name"].lower()
+                for c in characters
+            ):
                 characters.append(generic_char)
 
         deduplicated = self._deduplicate_characters(characters)
 
         for char in deduplicated:
             char["traits"] = self._extract_character_traits(char["name"], scene["text"])
-            char["emotions"] = self._extract_character_emotions(char["name"], scene["text"])
+            char["emotions"] = self._extract_character_emotions(
+                char["name"], scene["text"]
+            )
 
         return deduplicated[:5]
 
@@ -116,18 +225,14 @@ class SceneExtractor:
         generic_chars = []
 
         # First, extract proper names with descriptions (e.g., "Sophie, une belle jeune femme")
-        comma_pattern = r'([A-Z][a-z]+)\s*,\s*(un |une )((jeune |vieux |belle |beau |grand |petit |élégant |élégante )+)?(homme|femme|fille|garçon)'
+        comma_pattern = r"([A-Z][a-z]+)\s*,\s*(un |une )((jeune |vieux |belle |beau |grand |petit |élégant |élégante )+)?(homme|femme|fille|garçon)"
         comma_matches = list(re.finditer(comma_pattern, text, re.IGNORECASE))
 
         # Track positions of comma descriptions to skip them later
         comma_description_positions = []
         for match in comma_matches:
             name = match.group(1)
-            generic_chars.append({
-                "name": name,
-                "traits": [],
-                "emotions": []
-            })
+            generic_chars.append({"name": name, "traits": [], "emotions": []})
             # Mark the description part after comma to skip it
             comma_start = match.start() + len(name)
             comma_description_positions.append((comma_start, match.end()))
@@ -135,9 +240,9 @@ class SceneExtractor:
         # Then extract generic descriptions (but skip those already found after commas)
         generic_patterns = [
             # French patterns
-            r'(le |la |l\'|un |une )?((jeune |vieux |vieille |grand |grande |petit |petite |bel |belle )+)?(homme|femme|fille|garçon|enfant|personne)',
+            r"(le |la |l\'|un |une )?((jeune |vieux |vieille |grand |grande |petit |petite |bel |belle )+)?(homme|femme|fille|garçon|enfant|personne)",
             # English patterns
-            r'(the |a |an )?((young |old |tall |short |beautiful |handsome )+)?(man|woman|girl|boy|person)',
+            r"(the |a |an )?((young |old |tall |short |beautiful |handsome )+)?(man|woman|girl|boy|person)",
         ]
 
         for pattern in generic_patterns:
@@ -155,11 +260,9 @@ class SceneExtractor:
                     if clean_name and len(clean_name) > 3:
                         # Capitalize first letter for consistency
                         clean_name = clean_name[0].upper() + clean_name[1:]
-                        generic_chars.append({
-                            "name": clean_name,
-                            "traits": [],
-                            "emotions": []
-                        })
+                        generic_chars.append(
+                            {"name": clean_name, "traits": [], "emotions": []}
+                        )
 
         return generic_chars
 
@@ -169,16 +272,78 @@ class SceneExtractor:
 
         # Exclude common words that start with capital letters
         excluded_words = {
-            "il", "elle", "ils", "elles", "le", "la", "les", "un", "une", "des",
-            "ce", "cet", "cette", "ces", "son", "sa", "ses", "leur", "leurs",
-            "plus", "tout", "tous", "toute", "toutes", "autre", "autres",
-            "he", "she", "they", "the", "a", "an", "his", "her", "their", "this", "that",
+            "il",
+            "elle",
+            "ils",
+            "elles",
+            "le",
+            "la",
+            "les",
+            "un",
+            "une",
+            "des",
+            "ce",
+            "cet",
+            "cette",
+            "ces",
+            "son",
+            "sa",
+            "ses",
+            "leur",
+            "leurs",
+            "plus",
+            "tout",
+            "tous",
+            "toute",
+            "toutes",
+            "autre",
+            "autres",
+            "he",
+            "she",
+            "they",
+            "the",
+            "a",
+            "an",
+            "his",
+            "her",
+            "their",
+            "this",
+            "that",
             # Conjonctions et adverbes souvent en début de phrase
-            "lorsque", "quand", "alors", "mais", "donc", "car", "puis", "ensuite",
-            "pourquoi", "comment", "où", "qui", "que", "quoi",
-            "when", "then", "but", "so", "because", "why", "how", "where", "who", "what",
+            "lorsque",
+            "quand",
+            "alors",
+            "mais",
+            "donc",
+            "car",
+            "puis",
+            "ensuite",
+            "pourquoi",
+            "comment",
+            "où",
+            "qui",
+            "que",
+            "quoi",
+            "when",
+            "then",
+            "but",
+            "so",
+            "because",
+            "why",
+            "how",
+            "where",
+            "who",
+            "what",
             # Noms propres géographiques communs (doivent être filtrés si pas des personnages)
-            "forêt", "vierge", "histoires", "chine", "arizona", "ça", "mon", "ma", "mes"
+            "forêt",
+            "vierge",
+            "histoires",
+            "chine",
+            "arizona",
+            "ça",
+            "mon",
+            "ma",
+            "mes",
         }
 
         if name_lower in excluded_words or len(name) <= 2:
@@ -186,9 +351,12 @@ class SceneExtractor:
 
         # Exclude words that are part of common French/English expressions
         common_expressions = [
-            "intelligence artificielle", "artificial intelligence",
-            "aujourd'hui", "aujourd hui",
-            "institut de recherche", "research institute"
+            "intelligence artificielle",
+            "artificial intelligence",
+            "aujourd'hui",
+            "aujourd hui",
+            "institut de recherche",
+            "research institute",
         ]
 
         text_lower = text.lower()
@@ -199,13 +367,29 @@ class SceneExtractor:
         # Exclude words that appear at the start of sentences but aren't names
         # Check if the word is followed by common character actions/verbs
         character_verbs = [
-            "est", "entre", "sort", "marche", "regarde", "parle", "sourit", "dit", "prend",
-            "is", "enters", "exits", "walks", "looks", "speaks", "smiles", "says", "takes"
+            "est",
+            "entre",
+            "sort",
+            "marche",
+            "regarde",
+            "parle",
+            "sourit",
+            "dit",
+            "prend",
+            "is",
+            "enters",
+            "exits",
+            "walks",
+            "looks",
+            "speaks",
+            "smiles",
+            "says",
+            "takes",
         ]
 
         # Build pattern to check if name appears with character-like context
         has_character_context = False
-        name_pattern = rf'\b{re.escape(name)}\b'
+        name_pattern = rf"\b{re.escape(name)}\b"
         matches = list(re.finditer(name_pattern, text, re.IGNORECASE))
 
         for match in matches:
@@ -229,7 +413,14 @@ class SceneExtractor:
         if not characters:
             return []
 
-        invalid_names = {"institut", "recherche", "intelligence", "paris", "dubois", "martin"}
+        invalid_names = {
+            "institut",
+            "recherche",
+            "intelligence",
+            "paris",
+            "dubois",
+            "martin",
+        }
 
         filtered = []
         for char in characters:
@@ -241,7 +432,7 @@ class SceneExtractor:
         def sort_key(char):
             name = char["name"]
             # Check if it's a proper name (single capitalized word, no spaces)
-            is_proper_name = name[0].isupper() and ' ' not in name and ',' not in name
+            is_proper_name = name[0].isupper() and " " not in name and "," not in name
             # Proper names get priority (0), generic descriptions get (1)
             return (0 if is_proper_name else 1, -len(name))
 
@@ -320,7 +511,9 @@ class SceneExtractor:
         # Validate traits have contextual support
         for trait in filtered_traits:
             # Check if trait or related words appear near character name
-            trait_context = self._extract_character_context_window(name, text, window=100)
+            trait_context = self._extract_character_context_window(
+                name, text, window=100
+            )
 
             # Semantic validation: trait should appear in context or have synonyms
             if self._has_semantic_support(trait, trait_context):
@@ -328,19 +521,22 @@ class SceneExtractor:
 
         return validated[:5]  # Limit to top 5
 
-    def _extract_character_context_window(self, name: str, text: str, window: int = 100) -> str:
+    def _extract_character_context_window(
+        self, name: str, text: str, window: int = 100
+    ) -> str:
         """Extract text window around character mentions."""
         import re
+
         name_lower = name.lower()
         text_lower = text.lower()
 
         contexts = []
-        for match in re.finditer(rf'\b{re.escape(name_lower)}\b', text_lower):
+        for match in re.finditer(rf"\b{re.escape(name_lower)}\b", text_lower):
             start = max(0, match.start() - window)
             end = min(len(text), match.end() + window)
             contexts.append(text[start:end])
 
-        return ' '.join(contexts) if contexts else text[:200]
+        return " ".join(contexts) if contexts else text[:200]
 
     def _has_semantic_support(self, trait: str, context: str) -> bool:
         """Check if trait has semantic support in context."""
@@ -383,7 +579,7 @@ class SceneExtractor:
         matches = re.finditer(clothing_pattern, text, re.IGNORECASE)
         for match in matches:
             full_match = match.group(0)
-            color_pattern = r'\b(rouge|bleu|vert|jaune|noir|blanc|red|blue|green|yellow|black|white|gris|gray)\b'
+            color_pattern = r"\b(rouge|bleu|vert|jaune|noir|blanc|red|blue|green|yellow|black|white|gris|gray)\b"
             colors = re.findall(color_pattern, full_match, re.IGNORECASE)
             if colors:
                 for color in colors:
@@ -398,7 +594,7 @@ class SceneExtractor:
             "pantalon": ["pantalon", "pants", "trousers"],
             "chemise": ["chemise", "shirt"],
             "chapeau": ["chapeau", "hat"],
-            "lunettes": ["lunettes", "glasses"]
+            "lunettes": ["lunettes", "glasses"],
         }
 
         for keywords in appearance_words.values():
@@ -410,10 +606,30 @@ class SceneExtractor:
                         if match.lower() in self.visual_keywords["colors"]:
                             traits.append(f"{match} {keyword}")
 
-        physical_traits = ["jeune", "vieux", "grand", "petit", "mince", "fort",
-                          "élégant", "simple", "moderne", "classique",
-                          "young", "old", "tall", "short", "slim", "strong",
-                          "elegant", "simple", "modern", "classic", "passionate", "beautiful"]
+        physical_traits = [
+            "jeune",
+            "vieux",
+            "grand",
+            "petit",
+            "mince",
+            "fort",
+            "élégant",
+            "simple",
+            "moderne",
+            "classique",
+            "young",
+            "old",
+            "tall",
+            "short",
+            "slim",
+            "strong",
+            "elegant",
+            "simple",
+            "modern",
+            "classic",
+            "passionate",
+            "beautiful",
+        ]
 
         text_lower = text.lower()
         name_lower = name.lower()
@@ -437,14 +653,32 @@ class SceneExtractor:
 
         emotions = []
         emotion_words = {
-            "heureux": ["heureux", "joyeux", "content", "sourit", "rit", "célébr", "fier", "merveilleux", "réjoui", "excité"],
-            "triste": ["triste", "pleure", "mélancolique", "déçu", "désespéré", "malheureux"],
+            "heureux": [
+                "heureux",
+                "joyeux",
+                "content",
+                "sourit",
+                "rit",
+                "célébr",
+                "fier",
+                "merveilleux",
+                "réjoui",
+                "excité",
+            ],
+            "triste": [
+                "triste",
+                "pleure",
+                "mélancolique",
+                "déçu",
+                "désespéré",
+                "malheureux",
+            ],
             "surpris": ["surpris", "étonné", "choqué", "stupéfait", "abasourdi"],
             "nerveux": ["nerveux", "anxieux", "inquiet", "stressé", "tendu"],
             "en colère": ["fâché", "énervé", "furieux", "irrité", "colère"],
             "calme": ["calme", "serein", "paisible", "tranquille", "détendu"],
             "passionné": ["passionné", "enthousiaste", "motivé", "inspiré"],
-            "encourageant": ["encourageant", "soutien", "réconfortant", "bienveillant"]
+            "encourageant": ["encourageant", "soutien", "réconfortant", "bienveillant"],
         }
 
         text_lower = text.lower()
@@ -453,7 +687,9 @@ class SceneExtractor:
         for emotion, keywords in emotion_words.items():
             for keyword in keywords:
                 if keyword in text_lower:
-                    pattern = rf"{name_lower}[^.]*?{keyword}|{keyword}[^.]*?{name_lower}"
+                    pattern = (
+                        rf"{name_lower}[^.]*?{keyword}|{keyword}[^.]*?{name_lower}"
+                    )
                     if re.search(pattern, text_lower, re.IGNORECASE):
                         emotions.append(emotion)
                         break
@@ -463,21 +699,50 @@ class SceneExtractor:
 
         return list(set(emotions[:3]))
 
-    def _filter_contradictory_emotions(self, emotions: List[str], text: str) -> List[str]:
+    def _filter_contradictory_emotions(
+        self, emotions: List[str], text: str
+    ) -> List[str]:
         """Filter out emotions that contradict explicit text cues."""
         text_lower = text.lower()
 
         # Positive indicators
-        positive_cues = ["sourit", "rit", "joyeux", "heureux", "content", "smile", "laugh", "happy", "cheerful"]
+        positive_cues = [
+            "sourit",
+            "rit",
+            "joyeux",
+            "heureux",
+            "content",
+            "smile",
+            "laugh",
+            "happy",
+            "cheerful",
+        ]
         # Negative indicators
-        negative_cues = ["pleure", "triste", "malheureux", "cry", "sad", "unhappy", "worried", "anxious"]
+        negative_cues = [
+            "pleure",
+            "triste",
+            "malheureux",
+            "cry",
+            "sad",
+            "unhappy",
+            "worried",
+            "anxious",
+        ]
 
         has_positive = any(cue in text_lower for cue in positive_cues)
         has_negative = any(cue in text_lower for cue in negative_cues)
 
         # If text has clear positive cues, remove negative emotions
         if has_positive and not has_negative:
-            positive_emotions = {"happy", "joyful", "excited", "proud", "calm", "passionate", "encouraging"}
+            positive_emotions = {
+                "happy",
+                "joyful",
+                "excited",
+                "proud",
+                "calm",
+                "passionate",
+                "encouraging",
+            }
             emotions = [e for e in emotions if e in positive_emotions]
 
         # If text has clear negative cues, remove positive emotions
@@ -506,7 +771,7 @@ class SceneExtractor:
         return {
             "location": location,
             "time_of_day": time_of_day,
-            "lighting": lighting[:2]  # Keep top 2 lighting descriptions
+            "lighting": lighting[:2],  # Keep top 2 lighting descriptions
         }
 
     def _extract_time(self, text: str) -> str:
@@ -514,7 +779,7 @@ class SceneExtractor:
             "matin": ["matin", "aube", "morning", "dawn"],
             "après-midi": ["après-midi", "midi", "afternoon", "noon"],
             "soir": ["soir", "crépuscule", "evening", "dusk"],
-            "nuit": ["nuit", "minuit", "night", "midnight"]
+            "nuit": ["nuit", "minuit", "night", "midnight"],
         }
 
         for time_name, keywords in times.items():
@@ -528,8 +793,8 @@ class SceneExtractor:
         text = scene["text"]
 
         object_patterns = [
-            r'\b(table|chaise|fenêtre|porte|lit|livre|verre|lampe)\b',
-            r'\b(table|chair|window|door|bed|book|glass|lamp)\b'
+            r"\b(table|chaise|fenêtre|porte|lit|livre|verre|lampe)\b",
+            r"\b(table|chair|window|door|bed|book|glass|lamp)\b",
         ]
 
         objects = []
@@ -553,12 +818,11 @@ class SceneExtractor:
         text = scene["text"].lower()
 
         colors = [color for color in self.visual_keywords["colors"] if color in text]
-        lighting = [light for light in self.visual_keywords["lighting"] if light in text]
+        lighting = [
+            light for light in self.visual_keywords["lighting"] if light in text
+        ]
 
-        return {
-            "colors": colors[:3],
-            "lighting": lighting[:2]
-        }
+        return {"colors": colors[:3], "lighting": lighting[:2]}
 
     def _generate_visual_prompt(self, scene: Dict) -> str:
         parts = []

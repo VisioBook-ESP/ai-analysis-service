@@ -36,11 +36,13 @@ class TextPreprocessor:
             remove_links=remove_links,
             do_mask_pii=mask_pii,
             remove_emoji=remove_emoji,
-            lowercase=lowercase
+            lowercase=lowercase,
         )
 
         sentences = split_sentences(clean_text, lang=detected_lang)
-        chunks = build_chunks(clean_text, lang=detected_lang, max_tokens=max_tokens, overlap=overlap)
+        chunks = build_chunks(
+            clean_text, lang=detected_lang, max_tokens=max_tokens, overlap=overlap
+        )
 
         quality = noise_score(clean_text)
         quality["assessment"] = assess_quality(clean_text)
@@ -58,9 +60,9 @@ class TextPreprocessor:
                 "original_length": len(text),
                 "cleaned_length": len(clean_text),
                 "sentence_count": len(sentences),
-                "chunk_count": len(chunks)
+                "chunk_count": len(chunks),
             },
-            "processing_time_ms": round(processing_time_ms, 2)
+            "processing_time_ms": round(processing_time_ms, 2),
         }
 
     def preprocess_batch(self, texts: list[str], **kwargs) -> list[Dict[str, Any]]:
@@ -70,9 +72,5 @@ class TextPreprocessor:
                 result = self.preprocess(text, **kwargs)
                 results.append(result)
             except Exception as e:
-                results.append({
-                    "error": str(e),
-                    "text": "",
-                    "language": "unknown"
-                })
+                results.append({"error": str(e), "text": "", "language": "unknown"})
         return results

@@ -4,6 +4,7 @@ from functools import lru_cache
 
 try:
     import spacy
+
     _SPACY_AVAILABLE = True
 except ImportError:
     spacy = None
@@ -51,11 +52,13 @@ def split_sentences(text: str, lang: str = "fr") -> List[Dict[str, Any]]:
             doc = nlp(text)
             sentences = []
             for sent in doc.sents:
-                sentences.append({
-                    "start": sent.start_char,
-                    "end": sent.end_char,
-                    "text": sent.text.strip()
-                })
+                sentences.append(
+                    {
+                        "start": sent.start_char,
+                        "end": sent.end_char,
+                        "text": sent.text.strip(),
+                    }
+                )
             return sentences
         except Exception:
             pass
@@ -73,19 +76,11 @@ def _split_sentences_fallback(text: str) -> List[Dict[str, Any]]:
         if segment:
             start = text.find(segment, cursor)
             end = start + len(segment)
-            sentences.append({
-                "start": start,
-                "end": end,
-                "text": segment
-            })
+            sentences.append({"start": start, "end": end, "text": segment})
             cursor = end
 
     if not sentences and text.strip():
-        sentences = [{
-            "start": 0,
-            "end": len(text),
-            "text": text.strip()
-        }]
+        sentences = [{"start": 0, "end": len(text), "text": text.strip()}]
 
     return sentences
 
@@ -108,10 +103,7 @@ def tokenize(text: str, lang: str = "fr") -> List[str]:
 
 
 def build_chunks(
-    text: str,
-    lang: str = "fr",
-    max_tokens: int = 512,
-    overlap: int = 64
+    text: str, lang: str = "fr", max_tokens: int = 512, overlap: int = 64
 ) -> List[Dict[str, Any]]:
     if not text:
         return []
@@ -128,7 +120,9 @@ def build_chunks(
     return _build_chunks_fallback(text, max_tokens, overlap)
 
 
-def _build_chunks_spacy(text: str, nlp, max_tokens: int, overlap: int) -> List[Dict[str, Any]]:
+def _build_chunks_spacy(
+    text: str, nlp, max_tokens: int, overlap: int
+) -> List[Dict[str, Any]]:
     doc = nlp(text)
     tokens = [t for t in doc]
 
@@ -146,14 +140,16 @@ def _build_chunks_spacy(text: str, nlp, max_tokens: int, overlap: int) -> List[D
         end_char = end_token.idx + len(end_token)
         chunk_text = doc.text[start_char:end_char]
 
-        chunks.append({
-            "token_start": i,
-            "token_end": j,
-            "start_char": start_char,
-            "end_char": end_char,
-            "text": chunk_text,
-            "token_count": j - i
-        })
+        chunks.append(
+            {
+                "token_start": i,
+                "token_end": j,
+                "start_char": start_char,
+                "end_char": end_char,
+                "text": chunk_text,
+                "token_count": j - i,
+            }
+        )
 
         if j == len(tokens):
             break
@@ -163,7 +159,9 @@ def _build_chunks_spacy(text: str, nlp, max_tokens: int, overlap: int) -> List[D
     return chunks
 
 
-def _build_chunks_fallback(text: str, max_tokens: int, overlap: int) -> List[Dict[str, Any]]:
+def _build_chunks_fallback(
+    text: str, max_tokens: int, overlap: int
+) -> List[Dict[str, Any]]:
     tokens = tokenize(text, "xx")
 
     if not tokens:
@@ -187,14 +185,16 @@ def _build_chunks_fallback(text: str, max_tokens: int, overlap: int) -> List[Dic
         start_char = positions[i][0]
         end_char = positions[j - 1][1]
 
-        chunks.append({
-            "token_start": i,
-            "token_end": j,
-            "start_char": start_char,
-            "end_char": end_char,
-            "text": text[start_char:end_char],
-            "token_count": j - i
-        })
+        chunks.append(
+            {
+                "token_start": i,
+                "token_end": j,
+                "start_char": start_char,
+                "end_char": end_char,
+                "text": text[start_char:end_char],
+                "token_count": j - i,
+            }
+        )
 
         if j == len(tokens):
             break

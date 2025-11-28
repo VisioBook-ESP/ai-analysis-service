@@ -6,6 +6,7 @@ try:
     from sentence_transformers import SentenceTransformer
     from transformers import pipeline
     import torch
+
     _SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     _SENTENCE_TRANSFORMERS_AVAILABLE = False
@@ -37,7 +38,9 @@ class SemanticAnalyzer:
 
         if _SENTENCE_TRANSFORMERS_AVAILABLE:
             try:
-                self.embedder = SentenceTransformer("paraphrase-multilingual-mpnet-base-v2")
+                self.embedder = SentenceTransformer(
+                    "paraphrase-multilingual-mpnet-base-v2"
+                )
             except Exception:
                 pass
 
@@ -46,12 +49,14 @@ class SemanticAnalyzer:
                 self.sentiment_analyzer = pipeline(
                     "sentiment-analysis",
                     model="cardiffnlp/twitter-xlm-roberta-base-sentiment",
-                    device=device
+                    device=device,
                 )
             except Exception:
                 pass
 
-    def analyze(self, preprocessed: Dict, return_embeddings: bool = False) -> Dict[str, Any]:
+    def analyze(
+        self, preprocessed: Dict, return_embeddings: bool = False
+    ) -> Dict[str, Any]:
         text = preprocessed["text"]
         language = preprocessed["language"]
 
@@ -63,7 +68,7 @@ class SemanticAnalyzer:
                 "keywords": [],
                 "topics": [],
                 "sentiment": {"polarity": 0.0, "subjectivity": 0.0},
-                "embeddings": None
+                "embeddings": None,
             }
 
         doc = nlp(text)
@@ -77,7 +82,7 @@ class SemanticAnalyzer:
             "entities": entities,
             "keywords": keywords,
             "topics": topics,
-            "sentiment": sentiment
+            "sentiment": sentiment,
         }
 
         if return_embeddings and self.embedder:
@@ -101,12 +106,14 @@ class SemanticAnalyzer:
     def _extract_entities(self, doc) -> List[Dict]:
         entities = []
         for ent in doc.ents:
-            entities.append({
-                "text": ent.text,
-                "type": ent.label_,
-                "start": ent.start_char,
-                "end": ent.end_char
-            })
+            entities.append(
+                {
+                    "text": ent.text,
+                    "type": ent.label_,
+                    "start": ent.start_char,
+                    "end": ent.end_char,
+                }
+            )
         return entities
 
     def _extract_keywords(self, doc, top_n: int = 10) -> List[str]:
@@ -131,7 +138,9 @@ class SemanticAnalyzer:
             if ent.label_ in ["ORG", "PRODUCT", "EVENT", "WORK_OF_ART"]:
                 topics.add(ent.text.lower())
 
-        noun_chunks = [chunk.text.lower() for chunk in doc.noun_chunks if len(chunk.text) > 3]
+        noun_chunks = [
+            chunk.text.lower() for chunk in doc.noun_chunks if len(chunk.text) > 3
+        ]
         topics.update(noun_chunks[:5])
 
         return list(topics)[:10]
@@ -142,11 +151,7 @@ class SemanticAnalyzer:
                 text = doc.text[:512]
                 result = self.sentiment_analyzer(text)[0]
 
-                label_map = {
-                    "positive": 1.0,
-                    "neutral": 0.0,
-                    "negative": -1.0
-                }
+                label_map = {"positive": 1.0, "neutral": 0.0, "negative": -1.0}
 
                 base_polarity = label_map.get(result["label"].lower(), 0.0)
                 confidence = result["score"]
@@ -158,20 +163,69 @@ class SemanticAnalyzer:
 
                 return {
                     "polarity": round(polarity, 3),
-                    "subjectivity": round(confidence, 3)
+                    "subjectivity": round(confidence, 3),
                 }
             except Exception:
                 pass
 
         positive_words = {
-            "bon", "bien", "heureux", "joie", "excellent", "super", "génial", "sourit", "sourire", "rit", "rire",
-            "content", "joyeux", "merveilleux", "magnifique", "beau", "belle", "agréable", "plaisant", "réjoui",
-            "good", "happy", "great", "smile", "laugh", "wonderful", "beautiful", "pleasant", "cheerful", "joyful"
+            "bon",
+            "bien",
+            "heureux",
+            "joie",
+            "excellent",
+            "super",
+            "génial",
+            "sourit",
+            "sourire",
+            "rit",
+            "rire",
+            "content",
+            "joyeux",
+            "merveilleux",
+            "magnifique",
+            "beau",
+            "belle",
+            "agréable",
+            "plaisant",
+            "réjoui",
+            "good",
+            "happy",
+            "great",
+            "smile",
+            "laugh",
+            "wonderful",
+            "beautiful",
+            "pleasant",
+            "cheerful",
+            "joyful",
         }
         negative_words = {
-            "mauvais", "mal", "triste", "terrible", "nul", "pleure", "pleurer", "malheureux", "déçu", "désespéré",
-            "horrible", "affreux", "laid", "désagréable", "pénible",
-            "bad", "sad", "terrible", "awful", "cry", "unhappy", "disappointed", "horrible", "ugly", "unpleasant"
+            "mauvais",
+            "mal",
+            "triste",
+            "terrible",
+            "nul",
+            "pleure",
+            "pleurer",
+            "malheureux",
+            "déçu",
+            "désespéré",
+            "horrible",
+            "affreux",
+            "laid",
+            "désagréable",
+            "pénible",
+            "bad",
+            "sad",
+            "terrible",
+            "awful",
+            "cry",
+            "unhappy",
+            "disappointed",
+            "horrible",
+            "ugly",
+            "unpleasant",
         }
 
         words = [token.lemma_.lower() for token in doc if token.is_alpha]
@@ -189,10 +243,7 @@ class SemanticAnalyzer:
         subjectivity = (positive_count + negative_count) / total
         subjectivity = min(1.0, subjectivity)
 
-        return {
-            "polarity": round(polarity, 3),
-            "subjectivity": round(subjectivity, 3)
-        }
+        return {"polarity": round(polarity, 3), "subjectivity": round(subjectivity, 3)}
 
     def _generate_embeddings(self, text: str) -> Optional[List[float]]:
         if not self.embedder:
