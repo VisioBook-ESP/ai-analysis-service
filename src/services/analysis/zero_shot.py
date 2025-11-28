@@ -1,6 +1,5 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 import hashlib
-from functools import lru_cache
 
 try:
     from transformers import pipeline

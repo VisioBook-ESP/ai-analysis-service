@@ -1,5 +1,4 @@
 from typing import Dict, List, Any
-from collections import Counter
 import re
 
 try:

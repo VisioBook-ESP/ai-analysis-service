@@ -100,7 +100,6 @@ class SceneExtractor:
         self, preprocessed: Dict, semantic_data: Optional[Dict] = None
     ) -> Dict[str, Any]:
         sentences = preprocessed["sentences"]
-        text = preprocessed["text"]
 
         scenes = self._detect_scenes(sentences, semantic_data)
 
@@ -483,8 +482,6 @@ class SceneExtractor:
     def _validate_traits(self, ai_traits: List[str], name: str, text: str) -> List[str]:
         """Validate AI-predicted traits have some textual support."""
         validated = []
-        text_lower = text.lower()
-        name_lower = name.lower()
 
         # Remove contradictory traits
         contradictions = [
