@@ -96,9 +96,7 @@ class SceneExtractor:
             ],
         }
 
-    def extract(
-        self, preprocessed: Dict, semantic_data: Optional[Dict] = None
-    ) -> Dict[str, Any]:
+    def extract(self, preprocessed: Dict, semantic_data: Optional[Dict] = None) -> Dict[str, Any]:
         sentences = preprocessed["sentences"]
 
         scenes = self._detect_scenes(sentences, semantic_data)
@@ -113,9 +111,7 @@ class SceneExtractor:
 
         return {"scene_count": len(scenes), "scenes": scenes}
 
-    def _detect_scenes(
-        self, sentences: List[Dict], semantic_data: Optional[Dict]
-    ) -> List[Dict]:
+    def _detect_scenes(self, sentences: List[Dict], semantic_data: Optional[Dict]) -> List[Dict]:
         scenes = []
         current_scene = {
             "scene_id": f"scene_{len(scenes)+1:03d}",
@@ -127,9 +123,7 @@ class SceneExtractor:
             current_scene["sentences"].append(sentence)
 
             if self._is_scene_break(sentence, i, sentences):
-                current_scene["text"] = " ".join(
-                    [s["text"] for s in current_scene["sentences"]]
-                )
+                current_scene["text"] = " ".join([s["text"] for s in current_scene["sentences"]])
                 scenes.append(current_scene)
 
                 current_scene = {
@@ -139,16 +133,12 @@ class SceneExtractor:
                 }
 
         if current_scene["sentences"]:
-            current_scene["text"] = " ".join(
-                [s["text"] for s in current_scene["sentences"]]
-            )
+            current_scene["text"] = " ".join([s["text"] for s in current_scene["sentences"]])
             scenes.append(current_scene)
 
         return scenes
 
-    def _is_scene_break(
-        self, sentence: Dict, index: int, all_sentences: List[Dict]
-    ) -> bool:
+    def _is_scene_break(self, sentence: Dict, index: int, all_sentences: List[Dict]) -> bool:
         text = sentence["text"].lower()
 
         location_changes = [
@@ -182,9 +172,7 @@ class SceneExtractor:
 
         if len(all_sentences) > index + 1:
             next_sentence = all_sentences[index + 1]["text"].lower()
-            if next_sentence.startswith(
-                ("il", "elle", "ils", "elles", "he", "she", "they")
-            ):
+            if next_sentence.startswith(("il", "elle", "ils", "elles", "he", "she", "they")):
                 return False
 
         if index > 0 and index % 3 == 0:
@@ -192,9 +180,7 @@ class SceneExtractor:
 
         return False
 
-    def _extract_characters(
-        self, scene: Dict, semantic_data: Optional[Dict]
-    ) -> List[Dict]:
+    def _extract_characters(self, scene: Dict, semantic_data: Optional[Dict]) -> List[Dict]:
         characters = []
 
         # Extract generic character descriptions (e.g., "le jeune homme", "une belle femme")
@@ -213,9 +199,7 @@ class SceneExtractor:
 
         for char in deduplicated:
             char["traits"] = self._extract_character_traits(char["name"], scene["text"])
-            char["emotions"] = self._extract_character_emotions(
-                char["name"], scene["text"]
-            )
+            char["emotions"] = self._extract_character_emotions(char["name"], scene["text"])
 
         return deduplicated[:5]
 
@@ -259,9 +243,7 @@ class SceneExtractor:
                     if clean_name and len(clean_name) > 3:
                         # Capitalize first letter for consistency
                         clean_name = clean_name[0].upper() + clean_name[1:]
-                        generic_chars.append(
-                            {"name": clean_name, "traits": [], "emotions": []}
-                        )
+                        generic_chars.append({"name": clean_name, "traits": [], "emotions": []})
 
         return generic_chars
 
@@ -508,9 +490,7 @@ class SceneExtractor:
         # Validate traits have contextual support
         for trait in filtered_traits:
             # Check if trait or related words appear near character name
-            trait_context = self._extract_character_context_window(
-                name, text, window=100
-            )
+            trait_context = self._extract_character_context_window(name, text, window=100)
 
             # Semantic validation: trait should appear in context or have synonyms
             if self._has_semantic_support(trait, trait_context):
@@ -518,9 +498,7 @@ class SceneExtractor:
 
         return validated[:5]  # Limit to top 5
 
-    def _extract_character_context_window(
-        self, name: str, text: str, window: int = 100
-    ) -> str:
+    def _extract_character_context_window(self, name: str, text: str, window: int = 100) -> str:
         """Extract text window around character mentions."""
         import re
 
@@ -684,9 +662,7 @@ class SceneExtractor:
         for emotion, keywords in emotion_words.items():
             for keyword in keywords:
                 if keyword in text_lower:
-                    pattern = (
-                        rf"{name_lower}[^.]*?{keyword}|{keyword}[^.]*?{name_lower}"
-                    )
+                    pattern = rf"{name_lower}[^.]*?{keyword}|{keyword}[^.]*?{name_lower}"
                     if re.search(pattern, text_lower, re.IGNORECASE):
                         emotions.append(emotion)
                         break
@@ -696,9 +672,7 @@ class SceneExtractor:
 
         return list(set(emotions[:3]))
 
-    def _filter_contradictory_emotions(
-        self, emotions: List[str], text: str
-    ) -> List[str]:
+    def _filter_contradictory_emotions(self, emotions: List[str], text: str) -> List[str]:
         """Filter out emotions that contradict explicit text cues."""
         text_lower = text.lower()
 
@@ -815,9 +789,7 @@ class SceneExtractor:
         text = scene["text"].lower()
 
         colors = [color for color in self.visual_keywords["colors"] if color in text]
-        lighting = [
-            light for light in self.visual_keywords["lighting"] if light in text
-        ]
+        lighting = [light for light in self.visual_keywords["lighting"] if light in text]
 
         return {"colors": colors[:3], "lighting": lighting[:2]}
 

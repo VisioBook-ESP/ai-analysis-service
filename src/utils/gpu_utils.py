@@ -29,13 +29,9 @@ def get_gpu_info() -> Optional[Dict]:
                     "memory_total_gb": round(memory_total / (1024**3), 2),
                     "memory_allocated_gb": round(memory_allocated / (1024**3), 2),
                     "memory_reserved_gb": round(memory_reserved / (1024**3), 2),
-                    "memory_free_gb": round(
-                        (memory_total - memory_reserved) / (1024**3), 2
-                    ),
+                    "memory_free_gb": round((memory_total - memory_reserved) / (1024**3), 2),
                     "utilization_percent": (
-                        round((memory_allocated / memory_total) * 100, 1)
-                        if memory_total > 0
-                        else 0
+                        round((memory_allocated / memory_total) * 100, 1) if memory_total > 0 else 0
                     ),
                 }
             )

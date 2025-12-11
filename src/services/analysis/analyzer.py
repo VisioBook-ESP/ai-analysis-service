@@ -61,9 +61,7 @@ class Analyzer:
                 "sentence_count": len(preprocessed["sentences"]),
                 "word_count": len(preprocessed["text"].split()),
                 "quality_score": preprocessed["quality"]["score"],
-                "quality_assessment": preprocessed["quality"].get(
-                    "assessment", "unknown"
-                ),
+                "quality_assessment": preprocessed["quality"].get("assessment", "unknown"),
             },
         }
 
@@ -75,9 +73,7 @@ class Analyzer:
             results["semantic"] = semantic_result
 
         if options.scenes:
-            scene_result = self.scene_extractor.extract(
-                preprocessed, semantic_data=semantic_result
-            )
+            scene_result = self.scene_extractor.extract(preprocessed, semantic_data=semantic_result)
             results["scenes"] = scene_result
 
         if options.summarize:

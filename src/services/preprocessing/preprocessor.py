@@ -22,7 +22,7 @@ class TextPreprocessor:
         remove_emoji: bool = False,
         lowercase: bool = False,
         max_tokens: int = 512,
-        overlap: int = 64
+        overlap: int = 64,
     ) -> Dict[str, Any]:
         start_time = time.time()
 

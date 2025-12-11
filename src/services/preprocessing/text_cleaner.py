@@ -17,9 +17,7 @@ def normalize_unicode(text: str) -> str:
 
 
 def strip_control_chars(text: str) -> str:
-    return "".join(
-        ch for ch in text if (ch in ["\n", "\t"] or unicodedata.category(ch)[0] != "C")
-    )
+    return "".join(ch for ch in text if (ch in ["\n", "\t"] or unicodedata.category(ch)[0] != "C"))
 
 
 def replace_smart_quotes(text: str) -> str:
@@ -91,7 +89,7 @@ def basic_clean(
     remove_links: bool = False,
     do_mask_pii: bool = False,
     remove_emoji: bool = False,
-    lowercase: bool = False
+    lowercase: bool = False,
 ) -> Tuple[str, Dict[str, List[str]]]:
     meta = {"emails": [], "phones": [], "ibans": []}
 

@@ -50,11 +50,7 @@ def noise_score(text: str) -> Dict[str, float]:
         0.0,
         min(
             1.0,
-            0.35 * f_non
-            + 0.20 * f_punct
-            + 0.20 * f_upper
-            + 0.15 * f_url
-            + 0.10 * f_sent,
+            0.35 * f_non + 0.20 * f_punct + 0.20 * f_upper + 0.15 * f_url + 0.10 * f_sent,
         ),
     )
 

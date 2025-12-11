@@ -43,9 +43,7 @@ class MetricsResponse(BaseModel):
     description="Vérifie que le service est en vie et répond aux requêtes",
 )
 def health_check(settings: Settings = Depends(get_settings)):
-    return HealthResponse(
-        status="healthy", service=settings.app_name, timestamp=datetime.now()
-    )
+    return HealthResponse(status="healthy", service=settings.app_name, timestamp=datetime.now())
 
 
 @router.get(

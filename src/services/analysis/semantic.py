@@ -38,9 +38,7 @@ class SemanticAnalyzer:
 
         if _SENTENCE_TRANSFORMERS_AVAILABLE:
             try:
-                self.embedder = SentenceTransformer(
-                    "paraphrase-multilingual-mpnet-base-v2"
-                )
+                self.embedder = SentenceTransformer("paraphrase-multilingual-mpnet-base-v2")
             except Exception:
                 pass
 
@@ -54,9 +52,7 @@ class SemanticAnalyzer:
             except Exception:
                 pass
 
-    def analyze(
-        self, preprocessed: Dict, return_embeddings: bool = False
-    ) -> Dict[str, Any]:
+    def analyze(self, preprocessed: Dict, return_embeddings: bool = False) -> Dict[str, Any]:
         text = preprocessed["text"]
         language = preprocessed["language"]
 
@@ -120,10 +116,7 @@ class SemanticAnalyzer:
         words = [
             token.lemma_.lower()
             for token in doc
-            if not token.is_stop
-            and not token.is_punct
-            and token.is_alpha
-            and len(token.text) > 2
+            if not token.is_stop and not token.is_punct and token.is_alpha and len(token.text) > 2
         ]
 
         counter = Counter(words)
@@ -138,9 +131,7 @@ class SemanticAnalyzer:
             if ent.label_ in ["ORG", "PRODUCT", "EVENT", "WORK_OF_ART"]:
                 topics.add(ent.text.lower())
 
-        noun_chunks = [
-            chunk.text.lower() for chunk in doc.noun_chunks if len(chunk.text) > 3
-        ]
+        noun_chunks = [chunk.text.lower() for chunk in doc.noun_chunks if len(chunk.text) > 3]
         topics.update(noun_chunks[:5])
 
         return list(topics)[:10]

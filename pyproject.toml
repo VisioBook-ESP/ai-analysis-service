@@ -1,0 +1,218 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-analysis-service"
+version = "1.0.0"
+description = "Service d'analyse de texte basé sur l'IA avec FastAPI"
+requires-python = ">=3.12"
+readme = "README.md"
+authors = [
+    { name = "Victor VATTOER", email = "victor.vattier@epitech.eu" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: FastAPI",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/ai-analysis-service"
+Repository = "https://github.com/yourusername/ai-analysis-service"
+
+# ============================================================================
+# PYTEST Configuration
+# ============================================================================
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+    "--maxfail=5",
+    "-ra",  # Show summary of all test outcomes
+]
+markers = [
+    "unit: Unit tests (fast, isolated)",
+    "integration: Integration tests (slower, may require services)",
+    "slow: Slow tests requiring model loading or heavy computation",
+    "gpu: Tests requiring GPU/CUDA availability",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+# ============================================================================
+# COVERAGE Configuration
+# ============================================================================
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+    "*/models/*",  # Exclure les fichiers de mod�les t�l�charg�s
+]
+branch = true
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# ============================================================================
+# BLACK Configuration (formatage de code)
+# ============================================================================
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | build
+  | dist
+  | models
+  | htmlcov
+)/
+'''
+
+# ============================================================================
+# RUFF Configuration (linting rapide)
+# ============================================================================
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "models",
+    "htmlcov",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+]
+ignore = [
+    "E501",  # Line too long (g�r� par black)
+    "B008",  # Function calls in argument defaults (FastAPI Depends)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Imported but unused
+"tests/**/*.py" = ["S101"]  # Use of assert
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+# ============================================================================
+# MYPY Configuration (vérification de types)
+# ============================================================================
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Mettre � true progressivement
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "spacy.*",
+    "transformers.*",
+    "langdetect.*",
+    "nltk.*",
+    "sentence_transformers.*",
+]
+ignore_missing_imports = true
+
+# ============================================================================
+# PYLINT Configuration
+# ============================================================================
+[tool.pylint.main]
+py-version = "3.12"
+ignore-paths = [
+    "^.*/venv/.*$",
+    "^.*/.venv/.*$",
+    "^.*/models/.*$",
+    "^.*/htmlcov/.*$",
+]
+
+[tool.pylint.messages_control]
+disable = [
+    "C0111",  # missing-docstring
+    "C0103",  # invalid-name
+    "R0903",  # too-few-public-methods (Pydantic models)
+    "R0913",  # too-many-arguments
+    "W0212",  # protected-access
+]
+
+[tool.pylint.format]
+max-line-length = 100
+
+[tool.pylint.design]
+max-attributes = 10
+max-args = 8
+
+# ============================================================================
+# ISORT Configuration (tri des imports)
+# ============================================================================
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["src"]
+skip_glob = [
+    ".venv/*",
+    "venv/*",
+    "models/*",
+]

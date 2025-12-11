@@ -9,9 +9,7 @@ class AnalysisOptions(BaseModel):
     mask_pii: bool = Field(True, description="Masquer les donnees personnelles")
     remove_links: bool = Field(False, description="Supprimer les URLs")
     return_embeddings: bool = Field(False, description="Retourner les embeddings")
-    max_summary_length: int = Field(
-        150, ge=50, le=500, description="Longueur max du resume"
-    )
+    max_summary_length: int = Field(150, ge=50, le=500, description="Longueur max du resume")
 
 
 class AnalyzeRequest(BaseModel):
@@ -23,9 +21,7 @@ class AnalyzeRequest(BaseModel):
 
 
 class BatchAnalyzeRequest(BaseModel):
-    texts: List[str] = Field(
-        ..., min_length=1, max_length=50, description="Liste de textes"
-    )
+    texts: List[str] = Field(..., min_length=1, max_length=50, description="Liste de textes")
     language: Optional[str] = Field("auto", description="Code langue")
     options: AnalysisOptions = Field(
         default_factory=AnalysisOptions, description="Options d'analyse"

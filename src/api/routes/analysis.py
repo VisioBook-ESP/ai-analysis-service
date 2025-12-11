@@ -76,9 +76,7 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
                         atmosphere=scene["atmosphere"],
                         objects=scene["objects"],
                         actions=scene["actions"],
-                        visual_attributes=VisualAttributes(
-                            **scene["visual_attributes"]
-                        ),
+                        visual_attributes=VisualAttributes(**scene["visual_attributes"]),
                     )
                 )
 
@@ -163,16 +161,12 @@ def analyze_batch(request: BatchAnalyzeRequest) -> BatchAnalyzeResponse:
                             Scene(
                                 scene_id=scene["scene_id"],
                                 text=scene["text"],
-                                characters=[
-                                    Character(**c) for c in scene["characters"]
-                                ],
+                                characters=[Character(**c) for c in scene["characters"]],
                                 setting=Setting(**scene["setting"]),
                                 atmosphere=scene["atmosphere"],
                                 objects=scene["objects"],
                                 actions=scene["actions"],
-                                visual_attributes=VisualAttributes(
-                                    **scene["visual_attributes"]
-                                ),
+                                visual_attributes=VisualAttributes(**scene["visual_attributes"]),
                             )
                         )
 

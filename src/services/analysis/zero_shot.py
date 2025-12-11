@@ -99,9 +99,7 @@ class ZeroShotClassifier:
             return self._emotion_cache[cache_key]
 
         try:
-            result = self.classifier(
-                context, candidate_labels=emotion_labels, multi_label=True
-            )
+            result = self.classifier(context, candidate_labels=emotion_labels, multi_label=True)
 
             detected_emotions = []
             for label, score in zip(result["labels"], result["scores"]):
@@ -119,9 +117,7 @@ class ZeroShotClassifier:
         except Exception:
             return []
 
-    def classify_traits(
-        self, text: str, character_name: str, threshold: float = 0.75
-    ) -> List[str]:
+    def classify_traits(self, text: str, character_name: str, threshold: float = 0.75) -> List[str]:
         if not self.classifier:
             return []
 
@@ -147,9 +143,7 @@ class ZeroShotClassifier:
             return self._trait_cache[cache_key]
 
         try:
-            result = self.classifier(
-                context, candidate_labels=trait_labels, multi_label=True
-            )
+            result = self.classifier(context, candidate_labels=trait_labels, multi_label=True)
 
             detected_traits = []
             for label, score in zip(result["labels"], result["scores"]):
@@ -190,9 +184,7 @@ class ZeroShotClassifier:
             return self._atmosphere_cache[cache_key]
 
         try:
-            result = self.classifier(
-                text, candidate_labels=atmosphere_labels, multi_label=False
-            )
+            result = self.classifier(text, candidate_labels=atmosphere_labels, multi_label=False)
 
             atmosphere = "neutral"
             if result["scores"][0] >= threshold:

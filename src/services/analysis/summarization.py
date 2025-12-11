@@ -40,19 +40,14 @@ class Summarizer:
 
         original_length = len(text)
         summary_length = (
-            len(abstractive_summary)
-            if abstractive_summary
-            else len(" ".join(extractive_sentences))
+            len(abstractive_summary) if abstractive_summary else len(" ".join(extractive_sentences))
         )
         reduction = (
-            ((original_length - summary_length) / original_length)
-            if original_length > 0
-            else 0
+            ((original_length - summary_length) / original_length) if original_length > 0 else 0
         )
 
         return {
-            "abstractive_summary": abstractive_summary
-            or " ".join(extractive_sentences),
+            "abstractive_summary": abstractive_summary or " ".join(extractive_sentences),
             "extractive_sentences": extractive_sentences,
             "key_points": key_points,
             "original_length": original_length,
@@ -115,9 +110,7 @@ class Summarizer:
             if len(text) > 1024:
                 text = text[:1024]
 
-            result = self.model(
-                text, max_length=max_length, min_length=min_length, do_sample=False
-            )
+            result = self.model(text, max_length=max_length, min_length=min_length, do_sample=False)
 
             return result[0]["summary_text"]
 

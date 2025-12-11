@@ -120,9 +120,7 @@ def build_chunks(
     return _build_chunks_fallback(text, max_tokens, overlap)
 
 
-def _build_chunks_spacy(
-    text: str, nlp, max_tokens: int, overlap: int
-) -> List[Dict[str, Any]]:
+def _build_chunks_spacy(text: str, nlp, max_tokens: int, overlap: int) -> List[Dict[str, Any]]:
     doc = nlp(text)
     tokens = [t for t in doc]
 
@@ -159,9 +157,7 @@ def _build_chunks_spacy(
     return chunks
 
 
-def _build_chunks_fallback(
-    text: str, max_tokens: int, overlap: int
-) -> List[Dict[str, Any]]:
+def _build_chunks_fallback(text: str, max_tokens: int, overlap: int) -> List[Dict[str, Any]]:
     tokens = tokenize(text, "xx")
 
     if not tokens:
