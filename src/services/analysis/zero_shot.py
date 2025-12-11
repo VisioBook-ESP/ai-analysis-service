@@ -1,9 +1,8 @@
-from typing import List, Dict, Optional
 import hashlib
 
 try:
-    from transformers import pipeline
     import torch
+    from transformers import pipeline
 
     _TRANSFORMERS_AVAILABLE = True
 except ImportError:
@@ -30,12 +29,12 @@ class ZeroShotClassifier:
             except Exception:
                 pass
 
-    def _get_cache_key(self, text: str, labels: List[str], threshold: float) -> str:
+    def _get_cache_key(self, text: str, labels: list[str], threshold: float) -> str:
         """Generate cache key from text, labels, and threshold."""
         content = f"{text}|{','.join(sorted(labels))}|{threshold}"
         return hashlib.md5(content.encode()).hexdigest()
 
-    def _manage_cache_size(self, cache: Dict) -> None:
+    def _manage_cache_size(self, cache: dict) -> None:
         """Keep cache size under limit by removing oldest entries."""
         if len(cache) > self.cache_size:
             # Remove 25% oldest entries
@@ -66,8 +65,8 @@ class ZeroShotClassifier:
         return text[:200]  # Fallback to first 200 chars
 
     def classify_emotions(
-        self, text: str, character_name: Optional[str] = None, threshold: float = 0.5
-    ) -> List[str]:
+        self, text: str, character_name: str | None = None, threshold: float = 0.5
+    ) -> list[str]:
         if not self.classifier:
             return []
 
@@ -117,7 +116,7 @@ class ZeroShotClassifier:
         except Exception:
             return []
 
-    def classify_traits(self, text: str, character_name: str, threshold: float = 0.75) -> List[str]:
+    def classify_traits(self, text: str, character_name: str, threshold: float = 0.75) -> list[str]:
         if not self.classifier:
             return []
 

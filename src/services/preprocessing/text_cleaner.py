@@ -1,7 +1,6 @@
-import re
 import html
+import re
 import unicodedata
-from typing import Tuple, Dict, List
 
 try:
     import regex as re_unicode
@@ -56,7 +55,7 @@ def remove_urls_emails(text: str) -> str:
     return collapse_spaces(text)
 
 
-def mask_pii(text: str) -> Tuple[str, Dict[str, List[str]]]:
+def mask_pii(text: str) -> tuple[str, dict[str, list[str]]]:
     masks = {"emails": [], "phones": [], "ibans": []}
 
     def _mask_replace(match):
@@ -90,7 +89,7 @@ def basic_clean(
     do_mask_pii: bool = False,
     remove_emoji: bool = False,
     lowercase: bool = False,
-) -> Tuple[str, Dict[str, List[str]]]:
+) -> tuple[str, dict[str, list[str]]]:
     meta = {"emails": [], "phones": [], "ibans": []}
 
     if not text:

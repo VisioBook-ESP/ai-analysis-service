@@ -1,6 +1,6 @@
 import re
-from typing import List, Dict, Any
 from functools import lru_cache
+from typing import Any
 
 try:
     import spacy
@@ -40,7 +40,7 @@ def _get_spacy_model(lang: str):
     return nlp
 
 
-def split_sentences(text: str, lang: str = "fr") -> List[Dict[str, Any]]:
+def split_sentences(text: str, lang: str = "fr") -> list[dict[str, Any]]:
     if not text or not text.strip():
         return []
 
@@ -66,7 +66,7 @@ def split_sentences(text: str, lang: str = "fr") -> List[Dict[str, Any]]:
     return _split_sentences_fallback(text)
 
 
-def _split_sentences_fallback(text: str) -> List[Dict[str, Any]]:
+def _split_sentences_fallback(text: str) -> list[dict[str, Any]]:
     pattern = re.compile(r"([^.!?;]+[.!?;])", re.DOTALL)
     sentences = []
     cursor = 0
@@ -85,7 +85,7 @@ def _split_sentences_fallback(text: str) -> List[Dict[str, Any]]:
     return sentences
 
 
-def tokenize(text: str, lang: str = "fr") -> List[str]:
+def tokenize(text: str, lang: str = "fr") -> list[str]:
     if not text:
         return []
 
@@ -104,7 +104,7 @@ def tokenize(text: str, lang: str = "fr") -> List[str]:
 
 def build_chunks(
     text: str, lang: str = "fr", max_tokens: int = 512, overlap: int = 64
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     if not text:
         return []
 
@@ -120,7 +120,7 @@ def build_chunks(
     return _build_chunks_fallback(text, max_tokens, overlap)
 
 
-def _build_chunks_spacy(text: str, nlp, max_tokens: int, overlap: int) -> List[Dict[str, Any]]:
+def _build_chunks_spacy(text: str, nlp, max_tokens: int, overlap: int) -> list[dict[str, Any]]:
     doc = nlp(text)
     tokens = [t for t in doc]
 
@@ -157,7 +157,7 @@ def _build_chunks_spacy(text: str, nlp, max_tokens: int, overlap: int) -> List[D
     return chunks
 
 
-def _build_chunks_fallback(text: str, max_tokens: int, overlap: int) -> List[Dict[str, Any]]:
+def _build_chunks_fallback(text: str, max_tokens: int, overlap: int) -> list[dict[str, Any]]:
     tokens = tokenize(text, "xx")
 
     if not tokens:

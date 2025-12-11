@@ -1,5 +1,6 @@
-from typing import Dict, List, Any, Optional
 import re
+from typing import Any
+
 from .zero_shot import ZeroShotClassifier
 
 
@@ -96,7 +97,7 @@ class SceneExtractor:
             ],
         }
 
-    def extract(self, preprocessed: Dict, semantic_data: Optional[Dict] = None) -> Dict[str, Any]:
+    def extract(self, preprocessed: dict, semantic_data: dict | None = None) -> dict[str, Any]:
         sentences = preprocessed["sentences"]
 
         scenes = self._detect_scenes(sentences, semantic_data)
@@ -111,7 +112,7 @@ class SceneExtractor:
 
         return {"scene_count": len(scenes), "scenes": scenes}
 
-    def _detect_scenes(self, sentences: List[Dict], semantic_data: Optional[Dict]) -> List[Dict]:
+    def _detect_scenes(self, sentences: list[dict], semantic_data: dict | None) -> list[dict]:
         scenes = []
         current_scene = {
             "scene_id": f"scene_{len(scenes)+1:03d}",
@@ -138,7 +139,7 @@ class SceneExtractor:
 
         return scenes
 
-    def _is_scene_break(self, sentence: Dict, index: int, all_sentences: List[Dict]) -> bool:
+    def _is_scene_break(self, sentence: dict, index: int, all_sentences: list[dict]) -> bool:
         text = sentence["text"].lower()
 
         location_changes = [
@@ -180,7 +181,7 @@ class SceneExtractor:
 
         return False
 
-    def _extract_characters(self, scene: Dict, semantic_data: Optional[Dict]) -> List[Dict]:
+    def _extract_characters(self, scene: dict, semantic_data: dict | None) -> list[dict]:
         characters = []
 
         # Extract generic character descriptions (e.g., "le jeune homme", "une belle femme")
@@ -203,7 +204,7 @@ class SceneExtractor:
 
         return deduplicated[:5]
 
-    def _extract_generic_characters(self, text: str) -> List[Dict]:
+    def _extract_generic_characters(self, text: str) -> list[dict]:
         """Extract generic character descriptions like 'le jeune homme', 'une belle femme'."""
         generic_chars = []
 
@@ -390,7 +391,7 @@ class SceneExtractor:
 
         return has_character_context
 
-    def _deduplicate_characters(self, characters: List[Dict]) -> List[Dict]:
+    def _deduplicate_characters(self, characters: list[dict]) -> list[dict]:
         if not characters:
             return []
 
@@ -461,7 +462,7 @@ class SceneExtractor:
 
         return False
 
-    def _validate_traits(self, ai_traits: List[str], name: str, text: str) -> List[str]:
+    def _validate_traits(self, ai_traits: list[str], name: str, text: str) -> list[str]:
         """Validate AI-predicted traits have some textual support."""
         validated = []
 
@@ -535,7 +536,7 @@ class SceneExtractor:
         indicators = trait_indicators.get(trait, [trait])
         return any(indicator in context_lower for indicator in indicators)
 
-    def _extract_character_traits(self, name: str, text: str) -> List[str]:
+    def _extract_character_traits(self, name: str, text: str) -> list[str]:
         # Hybrid approach: Regex (priority) + Zero-shot with strict validation
         traits = []
 
@@ -617,7 +618,7 @@ class SceneExtractor:
 
         return list(set(traits[:5]))
 
-    def _extract_character_emotions(self, name: str, text: str) -> List[str]:
+    def _extract_character_emotions(self, name: str, text: str) -> list[str]:
         ai_emotions = self.zero_shot.classify_emotions(text, character_name=name)
 
         if ai_emotions:
@@ -663,16 +664,13 @@ class SceneExtractor:
             for keyword in keywords:
                 if keyword in text_lower:
                     pattern = rf"{name_lower}[^.]*?{keyword}|{keyword}[^.]*?{name_lower}"
-                    if re.search(pattern, text_lower, re.IGNORECASE):
-                        emotions.append(emotion)
-                        break
-                    elif name_lower in text_lower and keyword in text_lower:
+                    if re.search(pattern, text_lower, re.IGNORECASE) or name_lower in text_lower and keyword in text_lower:
                         emotions.append(emotion)
                         break
 
         return list(set(emotions[:3]))
 
-    def _filter_contradictory_emotions(self, emotions: List[str], text: str) -> List[str]:
+    def _filter_contradictory_emotions(self, emotions: list[str], text: str) -> list[str]:
         """Filter out emotions that contradict explicit text cues."""
         text_lower = text.lower()
 
@@ -723,7 +721,7 @@ class SceneExtractor:
 
         return emotions[:3]
 
-    def _extract_setting(self, scene: Dict) -> Dict[str, Any]:
+    def _extract_setting(self, scene: dict) -> dict[str, Any]:
         text = scene["text"].lower()
 
         location = "unknown"
@@ -760,7 +758,7 @@ class SceneExtractor:
 
         return "unknown"
 
-    def _extract_objects(self, scene: Dict) -> List[str]:
+    def _extract_objects(self, scene: dict) -> list[str]:
         text = scene["text"]
 
         object_patterns = [
@@ -775,7 +773,7 @@ class SceneExtractor:
 
         return list(set(objects))[:5]
 
-    def _extract_actions(self, scene: Dict) -> List[str]:
+    def _extract_actions(self, scene: dict) -> list[str]:
         text = scene["text"].lower()
 
         actions = []
@@ -785,7 +783,7 @@ class SceneExtractor:
 
         return actions[:5]
 
-    def _extract_visual_attributes(self, scene: Dict) -> Dict[str, List[str]]:
+    def _extract_visual_attributes(self, scene: dict) -> dict[str, list[str]]:
         text = scene["text"].lower()
 
         colors = [color for color in self.visual_keywords["colors"] if color in text]
@@ -793,7 +791,7 @@ class SceneExtractor:
 
         return {"colors": colors[:3], "lighting": lighting[:2]}
 
-    def _generate_visual_prompt(self, scene: Dict) -> str:
+    def _generate_visual_prompt(self, scene: dict) -> str:
         parts = []
 
         if scene["characters"]:

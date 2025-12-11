@@ -1,10 +1,10 @@
-from typing import Dict, Any, Optional
 import time
+from typing import Any
 
-from .text_cleaner import basic_clean
 from .language_detector import detect_language
-from .segmenter import split_sentences, build_chunks
-from .quality_scorer import noise_score, assess_quality
+from .quality_scorer import assess_quality, noise_score
+from .segmenter import build_chunks, split_sentences
+from .text_cleaner import basic_clean
 
 
 class TextPreprocessor:
@@ -16,14 +16,14 @@ class TextPreprocessor:
         self,
         text: str,
         *,
-        language: Optional[str] = None,
+        language: str | None = None,
         remove_links: bool = False,
         mask_pii: bool = True,
         remove_emoji: bool = False,
         lowercase: bool = False,
         max_tokens: int = 512,
         overlap: int = 64,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         start_time = time.time()
 
         if language is None or language == "auto":
@@ -65,7 +65,7 @@ class TextPreprocessor:
             "processing_time_ms": round(processing_time_ms, 2),
         }
 
-    def preprocess_batch(self, texts: list[str], **kwargs) -> list[Dict[str, Any]]:
+    def preprocess_batch(self, texts: list[str], **kwargs) -> list[dict[str, Any]]:
         results = []
         for text in texts:
             try:

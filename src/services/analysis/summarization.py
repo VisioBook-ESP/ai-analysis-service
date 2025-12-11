@@ -1,9 +1,9 @@
-from typing import Dict, List, Any
 import re
+from typing import Any
 
 try:
-    from transformers import pipeline
     import torch
+    from transformers import pipeline
 
     _TRANSFORMERS_AVAILABLE = True
 except ImportError:
@@ -26,7 +26,7 @@ class Summarizer:
             except Exception:
                 pass
 
-    def summarize(self, preprocessed: Dict, max_length: int = 150) -> Dict[str, Any]:
+    def summarize(self, preprocessed: dict, max_length: int = 150) -> dict[str, Any]:
         text = preprocessed["text"]
         sentences = preprocessed["sentences"]
 
@@ -55,7 +55,7 @@ class Summarizer:
             "length_reduction_percent": round(reduction * 100, 1),
         }
 
-    def _extractive_summary(self, sentences: List[Dict], top_n: int = 3) -> List[str]:
+    def _extractive_summary(self, sentences: list[dict], top_n: int = 3) -> list[str]:
         if len(sentences) <= top_n:
             return [s["text"] for s in sentences]
 
@@ -117,7 +117,7 @@ class Summarizer:
         except Exception:
             return None
 
-    def _extract_key_points(self, sentences: List[Dict]) -> List[str]:
+    def _extract_key_points(self, sentences: list[dict]) -> list[str]:
         all_text = " ".join([s["text"] for s in sentences])
 
         key_patterns = [

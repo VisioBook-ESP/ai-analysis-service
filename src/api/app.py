@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
-from src.api.routes.health import router as health_router
+
 from src.api.routes.analysis import router as analysis_router
+from src.api.routes.health import router as health_router
 from src.config.settings import get_settings
 
 settings = get_settings()

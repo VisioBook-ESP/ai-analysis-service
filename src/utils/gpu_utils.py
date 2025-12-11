@@ -1,12 +1,12 @@
+
 import torch
-from typing import Dict, Optional
 
 
 def is_gpu_available() -> bool:
     return torch.cuda.is_available()
 
 
-def get_gpu_info() -> Optional[Dict]:
+def get_gpu_info() -> dict | None:
     if not torch.cuda.is_available():
         return None
 

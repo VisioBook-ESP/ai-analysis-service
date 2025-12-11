@@ -1,24 +1,25 @@
-from fastapi import APIRouter, HTTPException, status
 import time
 
-from src.services.analysis import Analyzer, AnalysisOptions as ServiceOptions
+from fastapi import APIRouter, HTTPException, status
+
 from src.api.schemas.analysis import (
     AnalyzeRequest,
     AnalyzeResponse,
     BatchAnalyzeRequest,
     BatchAnalyzeResponse,
-    TextStats,
-    SemanticResult,
-    SceneResult,
-    SummaryResult,
-    Entity,
-    SentimentScore,
     Character,
-    Setting,
-    VisualAttributes,
+    Entity,
     Scene,
+    SceneResult,
+    SemanticResult,
+    SentimentScore,
+    Setting,
+    SummaryResult,
+    TextStats,
+    VisualAttributes,
 )
-
+from src.services.analysis import AnalysisOptions as ServiceOptions
+from src.services.analysis import Analyzer
 
 router = APIRouter()
 _analyzer = Analyzer()

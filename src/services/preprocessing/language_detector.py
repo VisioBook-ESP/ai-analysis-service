@@ -1,5 +1,5 @@
 try:
-    from langdetect import detect, DetectorFactory
+    from langdetect import DetectorFactory, detect
 
     DetectorFactory.seed = 0
     _LANGDETECT_AVAILABLE = True

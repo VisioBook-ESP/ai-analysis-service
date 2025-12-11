@@ -1,9 +1,10 @@
-from typing import Dict, Any, Optional
 import time
+from typing import Any
 
 from src.services.preprocessing import TextPreprocessor
-from .semantic import SemanticAnalyzer
+
 from .scenes import SceneExtractor
+from .semantic import SemanticAnalyzer
 from .summarization import Summarizer
 
 
@@ -39,8 +40,8 @@ class Analyzer:
         self,
         text: str,
         language: str = "auto",
-        options: Optional[AnalysisOptions] = None,
-    ) -> Dict[str, Any]:
+        options: AnalysisOptions | None = None,
+    ) -> dict[str, Any]:
         if options is None:
             options = AnalysisOptions()
 

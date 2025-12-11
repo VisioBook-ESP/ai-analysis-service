@@ -1,10 +1,9 @@
 import re
-from typing import Dict
 
 _URL_PATTERN = re.compile(r"(https?://\S+|www\.\S+)", re.IGNORECASE)
 
 
-def noise_score(text: str) -> Dict[str, float]:
+def noise_score(text: str) -> dict[str, float]:
     if not text:
         return {
             "score": 0.0,

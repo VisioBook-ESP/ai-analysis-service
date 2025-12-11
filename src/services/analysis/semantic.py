@@ -1,11 +1,12 @@
-from typing import Dict, List, Any, Optional
-import spacy
 from collections import Counter
+from typing import Any
+
+import spacy
 
 try:
+    import torch
     from sentence_transformers import SentenceTransformer
     from transformers import pipeline
-    import torch
 
     _SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
@@ -52,7 +53,7 @@ class SemanticAnalyzer:
             except Exception:
                 pass
 
-    def analyze(self, preprocessed: Dict, return_embeddings: bool = False) -> Dict[str, Any]:
+    def analyze(self, preprocessed: dict, return_embeddings: bool = False) -> dict[str, Any]:
         text = preprocessed["text"]
         language = preprocessed["language"]
 
@@ -99,7 +100,7 @@ class SemanticAnalyzer:
             return self.nlp_en
         return None
 
-    def _extract_entities(self, doc) -> List[Dict]:
+    def _extract_entities(self, doc) -> list[dict]:
         entities = []
         for ent in doc.ents:
             entities.append(
@@ -112,7 +113,7 @@ class SemanticAnalyzer:
             )
         return entities
 
-    def _extract_keywords(self, doc, top_n: int = 10) -> List[str]:
+    def _extract_keywords(self, doc, top_n: int = 10) -> list[str]:
         words = [
             token.lemma_.lower()
             for token in doc
@@ -124,7 +125,7 @@ class SemanticAnalyzer:
 
         return keywords
 
-    def _extract_topics(self, doc) -> List[str]:
+    def _extract_topics(self, doc) -> list[str]:
         topics = set()
 
         for ent in doc.ents:
@@ -136,7 +137,7 @@ class SemanticAnalyzer:
 
         return list(topics)[:10]
 
-    def _analyze_sentiment(self, doc) -> Dict[str, float]:
+    def _analyze_sentiment(self, doc) -> dict[str, float]:
         if self.sentiment_analyzer:
             try:
                 text = doc.text[:512]
@@ -209,12 +210,10 @@ class SemanticAnalyzer:
             "pénible",
             "bad",
             "sad",
-            "terrible",
             "awful",
             "cry",
             "unhappy",
             "disappointed",
-            "horrible",
             "ugly",
             "unpleasant",
         }
@@ -236,7 +235,7 @@ class SemanticAnalyzer:
 
         return {"polarity": round(polarity, 3), "subjectivity": round(subjectivity, 3)}
 
-    def _generate_embeddings(self, text: str) -> Optional[List[float]]:
+    def _generate_embeddings(self, text: str) -> list[float] | None:
         if not self.embedder:
             return None
 

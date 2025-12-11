@@ -1,13 +1,12 @@
-from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel
-from typing import Optional, Dict
 from datetime import datetime
+
 import psutil
 import torch
+from fastapi import APIRouter, Depends, status
+from pydantic import BaseModel
 
 from src.config.settings import Settings, get_settings
 from src.utils.gpu_utils import get_gpu_info, is_gpu_available
-
 
 router = APIRouter()
 
@@ -23,16 +22,16 @@ class ReadinessResponse(BaseModel):
     service: str
     version: str
     timestamp: datetime
-    checks: Dict[str, bool]
-    details: Optional[Dict] = None
+    checks: dict[str, bool]
+    details: dict | None = None
 
 
 class MetricsResponse(BaseModel):
     service: str
     timestamp: datetime
-    system: Dict
-    gpu: Optional[Dict]
-    models: Dict
+    system: dict
+    gpu: dict | None
+    models: dict
 
 
 @router.get(
