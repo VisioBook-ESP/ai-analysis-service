@@ -57,3 +57,11 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Tests & Coverage
+htmlcov/
+.coverage
+coverage.xml
+.pytest_cache/
+.tox/
+.coverage.*

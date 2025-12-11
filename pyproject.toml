@@ -26,21 +26,19 @@ Repository = "https://github.com/yourusername/ai-analysis-service"
 # PYTEST Configuration
 # ============================================================================
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["test"]
+pythonpath = ["."]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "--verbose",
-    "--strict-markers",
-    "--strict-config",
-    "--cov=src",
-    "--cov-report=term-missing",
-    "--cov-report=html:htmlcov",
-    "--cov-report=xml",
-    "--cov-fail-under=80",
-    "--maxfail=5",
-    "-ra",  # Show summary of all test outcomes
+    "-v",                           # Verbose
+    "--tb=short",                   # Traceback court
+    "--cov=src",                    # Coverage du dossier src
+    "--cov-report=term-missing:skip-covered",  # Terminal propre, skip les fichiers 100%
+    "--cov-report=html",            # Rapport HTML
+    "--cov-fail-under=80",          # Minimum 80% coverage
+    "-ra",                          # Résumé de tous les tests
 ]
 markers = [
     "unit: Unit tests (fast, isolated)",
