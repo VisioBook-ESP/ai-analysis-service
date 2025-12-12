@@ -1,0 +1,8 @@
+# Development tools
+black==25.9.0
+ruff
+pylint
+mypy
+
+# Include production requirements
+-r requirements-prod.txt
