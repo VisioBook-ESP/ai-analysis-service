@@ -7,13 +7,9 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 env:
   PYTHON_VERSION: "3.12"
-  IMAGE_REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/${{ github.repository }}-dev
-  DOCKERFILE_PROD: Dockerfile
 
 jobs:
   formatage-check:
@@ -104,7 +100,7 @@ jobs:
           fi
           echo "✅ No debug leftovers found"
 
-  docker-build-and-push:
+  smoke-test:
     runs-on: ubuntu-latest
     needs:
       [
@@ -118,40 +114,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Free disk space
+      - name: Create .env file
         run: |
-          docker system prune -af --volumes
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          df -h
+          echo "APP_PORT=8083" > .env
+          echo "LOG_LEVEL=INFO" >> .env
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Build and start services
+        run: docker compose up -d --build
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.IMAGE_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Wait for service to be healthy
+        run: |
+          echo "Waiting for service to be ready..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:8083/health; then
+              echo ""
+              echo "Service is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i/30 - Service not ready yet..."
+            sleep 5
+          done
+          echo "Service failed to start"
+          docker compose logs
+          exit 1
 
-      - name: Extract Docker metadata (tags/labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest
+      - name: Verify health endpoint response
+        run: |
+          RESPONSE=$(curl -sf http://localhost:8083/health)
+          echo "Health response: $RESPONSE"
+          if echo "$RESPONSE" | grep -q '"status":"healthy"'; then
+            echo "Health check passed!"
+          else
+            echo "Unexpected health response"
+            exit 1
+          fi
 
-      - name: Build and push production image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ${{ env.DOCKERFILE_PROD }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
