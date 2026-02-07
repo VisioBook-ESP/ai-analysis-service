@@ -8,15 +8,15 @@ from src.api.schemas.analysis import (
     BatchAnalyzeRequest,
     BatchAnalyzeResponse,
     TextStats,
-    SemanticResult,
-    SceneResult,
-    SummaryResult,
-    Entity,
-    SentimentScore,
     Character,
-    Setting,
-    VisualAttributes,
+    CharacterRelationship,
     Scene,
+    SceneSetting,
+    SceneAtmosphere,
+    SoundTexture,
+    NarrativeAnalysis,
+    SentimentAnalysis,
+    SummaryResult,
 )
 
 
@@ -24,8 +24,50 @@ router = APIRouter()
 _analyzer = Analyzer()
 
 
+def _build_response_data(result: dict) -> dict:
+    """Build response data dict from analyzer result."""
+    response_data = {
+        "language": result["language"],
+        "text_stats": TextStats(**result["text_stats"]),
+        "processing_time_ms": result["processing_time_ms"],
+    }
+
+    if "characters" in result:
+        response_data["characters"] = [
+            Character(
+                relationships=[CharacterRelationship(**r) for r in c.get("relationships", [])],
+                **{k: v for k, v in c.items() if k != "relationships"},
+            )
+            for c in result["characters"]
+        ]
+
+    if "scenes" in result:
+        response_data["scenes"] = [
+            Scene(
+                setting=SceneSetting(**s["setting"]),
+                atmosphere=SceneAtmosphere(
+                    sounds_textures=SoundTexture(**s["atmosphere"]["sounds_textures"]),
+                    **{k: v for k, v in s["atmosphere"].items() if k != "sounds_textures"},
+                ),
+                **{k: v for k, v in s.items() if k not in ("setting", "atmosphere")},
+            )
+            for s in result["scenes"]
+        ]
+
+    if "narrative" in result:
+        response_data["narrative"] = NarrativeAnalysis(**result["narrative"])
+
+    if "sentiment" in result:
+        response_data["sentiment"] = SentimentAnalysis(**result["sentiment"])
+
+    if "summary" in result:
+        response_data["summary"] = SummaryResult(**result["summary"])
+
+    return response_data
+
+
 @router.post("/analyze", response_model=AnalyzeResponse, status_code=status.HTTP_200_OK)
-def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
+async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
     try:
         if len(request.text) > 500_000:
             raise HTTPException(
@@ -34,62 +76,20 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
             )
 
         service_options = ServiceOptions(
-            semantic=request.options.semantic,
+            characters=request.options.characters,
             scenes=request.options.scenes,
-            summarize=request.options.summarize,
+            narrative=request.options.narrative,
+            summary=request.options.summary,
             mask_pii=request.options.mask_pii,
             remove_links=request.options.remove_links,
-            return_embeddings=request.options.return_embeddings,
             max_summary_length=request.options.max_summary_length,
         )
 
-        result = _analyzer.analyze(
+        result = await _analyzer.analyze(
             text=request.text, language=request.language, options=service_options
         )
 
-        response_data = {
-            "language": result["language"],
-            "text_stats": TextStats(**result["text_stats"]),
-            "processing_time_ms": result["processing_time_ms"],
-        }
-
-        if "semantic" in result and result["semantic"]:
-            semantic_data = result["semantic"]
-            response_data["semantic"] = SemanticResult(
-                entities=[Entity(**e) for e in semantic_data["entities"]],
-                keywords=semantic_data["keywords"],
-                topics=semantic_data["topics"],
-                sentiment=SentimentScore(**semantic_data["sentiment"]),
-                embeddings=semantic_data.get("embeddings"),
-            )
-
-        if "scenes" in result and result["scenes"]:
-            scene_data = result["scenes"]
-            scenes_list = []
-            for scene in scene_data["scenes"]:
-                scenes_list.append(
-                    Scene(
-                        scene_id=scene["scene_id"],
-                        text=scene["text"],
-                        characters=[Character(**c) for c in scene["characters"]],
-                        setting=Setting(**scene["setting"]),
-                        atmosphere=scene["atmosphere"],
-                        objects=scene["objects"],
-                        actions=scene["actions"],
-                        visual_attributes=VisualAttributes(
-                            **scene["visual_attributes"]
-                        ),
-                    )
-                )
-
-            response_data["scenes"] = SceneResult(
-                scene_count=scene_data["scene_count"], scenes=scenes_list
-            )
-
-        if "summary" in result and result["summary"]:
-            response_data["summary"] = SummaryResult(**result["summary"])
-
-        return AnalyzeResponse(**response_data)
+        return AnalyzeResponse(**_build_response_data(result))
 
     except HTTPException:
         raise
@@ -100,12 +100,8 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
         )
 
 
-@router.post(
-    "/analyze/batch",
-    response_model=BatchAnalyzeResponse,
-    status_code=status.HTTP_200_OK,
-)
-def analyze_batch(request: BatchAnalyzeRequest) -> BatchAnalyzeResponse:
+@router.post("/analyze/batch", response_model=BatchAnalyzeResponse, status_code=status.HTTP_200_OK)
+async def analyze_batch(request: BatchAnalyzeRequest) -> BatchAnalyzeResponse:
     try:
         if len(request.texts) > 50:
             raise HTTPException(
@@ -116,12 +112,12 @@ def analyze_batch(request: BatchAnalyzeRequest) -> BatchAnalyzeResponse:
         start_time = time.time()
 
         service_options = ServiceOptions(
-            semantic=request.options.semantic,
+            characters=request.options.characters,
             scenes=request.options.scenes,
-            summarize=request.options.summarize,
+            narrative=request.options.narrative,
+            summary=request.options.summary,
             mask_pii=request.options.mask_pii,
             remove_links=request.options.remove_links,
-            return_embeddings=request.options.return_embeddings,
             max_summary_length=request.options.max_summary_length,
         )
 
@@ -135,57 +131,11 @@ def analyze_batch(request: BatchAnalyzeRequest) -> BatchAnalyzeResponse:
                     error_count += 1
                     continue
 
-                result = _analyzer.analyze(
+                result = await _analyzer.analyze(
                     text=text, language=request.language, options=service_options
                 )
-
-                response_data = {
-                    "language": result["language"],
-                    "text_stats": TextStats(**result["text_stats"]),
-                    "processing_time_ms": result["processing_time_ms"],
-                }
-
-                if "semantic" in result and result["semantic"]:
-                    semantic_data = result["semantic"]
-                    response_data["semantic"] = SemanticResult(
-                        entities=[Entity(**e) for e in semantic_data["entities"]],
-                        keywords=semantic_data["keywords"],
-                        topics=semantic_data["topics"],
-                        sentiment=SentimentScore(**semantic_data["sentiment"]),
-                        embeddings=semantic_data.get("embeddings"),
-                    )
-
-                if "scenes" in result and result["scenes"]:
-                    scene_data = result["scenes"]
-                    scenes_list = []
-                    for scene in scene_data["scenes"]:
-                        scenes_list.append(
-                            Scene(
-                                scene_id=scene["scene_id"],
-                                text=scene["text"],
-                                characters=[
-                                    Character(**c) for c in scene["characters"]
-                                ],
-                                setting=Setting(**scene["setting"]),
-                                atmosphere=scene["atmosphere"],
-                                objects=scene["objects"],
-                                actions=scene["actions"],
-                                visual_attributes=VisualAttributes(
-                                    **scene["visual_attributes"]
-                                ),
-                            )
-                        )
-
-                    response_data["scenes"] = SceneResult(
-                        scene_count=scene_data["scene_count"], scenes=scenes_list
-                    )
-
-                if "summary" in result and result["summary"]:
-                    response_data["summary"] = SummaryResult(**result["summary"])
-
-                results.append(AnalyzeResponse(**response_data))
+                results.append(AnalyzeResponse(**_build_response_data(result)))
                 success_count += 1
-
             except Exception:
                 error_count += 1
 

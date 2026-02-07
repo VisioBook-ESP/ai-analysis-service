@@ -1,0 +1,38 @@
+name: llm-server
+services:
+  vllm:
+    image: vllm/vllm-openai:latest
+    ipc: host
+    ports:
+      - "${VLLM_PORT:-8000}:8000"
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+      - VLLM_FLASH_ATTN_VERSION=2
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: [
+      "mistralai/Ministral-3-3B-Instruct-2512-BF16",
+      "--dtype", "bfloat16",
+      "--tensor-parallel-size", "1",
+      "--max-model-len", "8192",
+      "--gpu-memory-utilization", "0.85",
+      "--swap-space", "2"
+    ]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 3
+
+volumes:
+  hf-cache:

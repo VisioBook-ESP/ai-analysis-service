@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from src.api.routes.health import router as health_router
@@ -6,11 +7,20 @@ from src.config.settings import get_settings
 
 settings = get_settings()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    from src.api.routes.analysis import _analyzer
+    await _analyzer.close()
+
+
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="Service d'analyse IA pour extraction d'informations textuelles et generation de prompts image",
+    description="Service d'analyse IA via LLM (vLLM backend)",
     default_response_class=ORJSONResponse,
+    lifespan=lifespan,
 )
 
 

@@ -1,41 +1,51 @@
-from typing import Dict, Any, Optional
 import time
+import logging
+from typing import Dict, Any, Optional
 
 from src.services.preprocessing import TextPreprocessor
-from .semantic import SemanticAnalyzer
-from .scenes import SceneExtractor
-from .summarization import Summarizer
+from .llm_client import LLMClient
+from .prompts import SYSTEM_PROMPT, build_analysis_prompt
+from .response_parser import ResponseParser
+
+logger = logging.getLogger(__name__)
 
 
 class AnalysisOptions:
     def __init__(
         self,
-        semantic: bool = True,
+        characters: bool = True,
         scenes: bool = True,
-        summarize: bool = True,
+        narrative: bool = True,
+        summary: bool = True,
         mask_pii: bool = True,
         remove_links: bool = False,
-        return_embeddings: bool = False,
-        max_summary_length: int = 150,
+        max_summary_length: int = 200,
     ):
-        self.semantic = semantic
+        self.characters = characters
         self.scenes = scenes
-        self.summarize = summarize
+        self.narrative = narrative
+        self.summary = summary
         self.mask_pii = mask_pii
         self.remove_links = remove_links
-        self.return_embeddings = return_embeddings
         self.max_summary_length = max_summary_length
+
+    def to_dict(self) -> Dict[str, bool]:
+        return {
+            "characters": self.characters,
+            "scenes": self.scenes,
+            "narrative": self.narrative,
+            "summary": self.summary,
+        }
 
 
 class Analyzer:
 
     def __init__(self):
         self.preprocessor = TextPreprocessor()
-        self.semantic_analyzer = SemanticAnalyzer()
-        self.scene_extractor = SceneExtractor()
-        self.summarizer = Summarizer()
+        self.llm_client = LLMClient()
+        self.parser = ResponseParser()
 
-    def analyze(
+    async def analyze(
         self,
         text: str,
         language: str = "auto",
@@ -46,6 +56,7 @@ class Analyzer:
 
         start_time = time.time()
 
+        # Step 1: Preprocessing (synchronous, kept as-is)
         preprocessed = self.preprocessor.preprocess(
             text,
             language=language,
@@ -53,39 +64,47 @@ class Analyzer:
             remove_links=options.remove_links,
         )
 
-        results = {
-            "language": preprocessed["language"],
-            "text_stats": {
-                "original_length": len(text),
-                "cleaned_length": len(preprocessed["text"]),
-                "sentence_count": len(preprocessed["sentences"]),
-                "word_count": len(preprocessed["text"].split()),
-                "quality_score": preprocessed["quality"]["score"],
-                "quality_assessment": preprocessed["quality"].get(
-                    "assessment", "unknown"
-                ),
-            },
+        detected_language = preprocessed["language"]
+        cleaned_text = preprocessed["text"]
+
+        # Step 2: Text stats from preprocessing
+        text_stats = {
+            "original_length": len(text),
+            "cleaned_length": len(cleaned_text),
+            "sentence_count": len(preprocessed["sentences"]),
+            "word_count": len(cleaned_text.split()),
+            "quality_score": preprocessed["quality"]["score"],
+            "quality_assessment": preprocessed["quality"].get("assessment", "unknown"),
         }
 
-        semantic_result = None
-        if options.semantic:
-            semantic_result = self.semantic_analyzer.analyze(
-                preprocessed, return_embeddings=options.return_embeddings
+        # Step 3: Call LLM
+        options_dict = options.to_dict()
+        user_prompt = build_analysis_prompt(cleaned_text, detected_language, options_dict)
+
+        try:
+            raw_response = await self.llm_client.chat_completion(
+                system_prompt=SYSTEM_PROMPT,
+                user_prompt=user_prompt,
             )
-            results["semantic"] = semantic_result
+        except Exception as e:
+            logger.error(f"LLM call failed: {e}")
+            raise RuntimeError(f"LLM analysis failed: {e}")
 
-        if options.scenes:
-            scene_result = self.scene_extractor.extract(
-                preprocessed, semantic_data=semantic_result
-            )
-            results["scenes"] = scene_result
+        # Step 4: Parse LLM output
+        parsed = self.parser.parse(raw_response, options_dict)
 
-        if options.summarize:
-            summary_result = self.summarizer.summarize(
-                preprocessed, max_length=options.max_summary_length
-            )
-            results["summary"] = summary_result
+        # Step 5: Enrich summary with text stats
+        if "summary" in parsed:
+            parsed["summary"]["original_length"] = len(text)
+            parsed["summary"]["summary_length"] = len(parsed["summary"].get("summary", ""))
 
-        results["processing_time_ms"] = round((time.time() - start_time) * 1000, 2)
+        # Step 6: Assemble result
+        return {
+            "language": detected_language,
+            "text_stats": text_stats,
+            **parsed,
+            "processing_time_ms": round((time.time() - start_time) * 1000, 2),
+        }
 
-        return results
+    async def close(self):
+        await self.llm_client.close()
