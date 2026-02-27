@@ -45,6 +45,16 @@ class TestParse:
         result = parser.parse(raw, {"narrative": True})
         assert "narrative" in result
 
+    def test_scenes_option_true_includes_field(self, parser):
+        raw = {"scenes": [{"title": "Forest"}]}
+        result = parser.parse(raw, {"scenes": True})
+        assert "scenes" in result
+
+    def test_summary_option_true_includes_field(self, parser):
+        raw = {"summary": {"summary": "Good story."}}
+        result = parser.parse(raw, {"summary": True})
+        assert "summary" in result
+
     def test_summary_option_false_skips_field(self, parser):
         raw = {"summary": {"summary": "Good story."}}
         result = parser.parse(raw, {"summary": False})

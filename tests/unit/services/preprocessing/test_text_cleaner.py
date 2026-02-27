@@ -102,6 +102,24 @@ class TestCollapseSpaces:
 
 
 # ---------------------------------------------------------------------------
+# strip_emojis
+# ---------------------------------------------------------------------------
+
+class TestStripEmojis:
+    def test_removes_emojis(self):
+        from src.services.preprocessing.text_cleaner import strip_emojis
+        result = strip_emojis("Hello 🌟 world 🎉")
+        assert "🌟" not in result
+        assert "🎉" not in result
+        assert "Hello" in result
+
+    def test_no_emojis_unchanged(self):
+        from src.services.preprocessing.text_cleaner import strip_emojis
+        text = "No emojis here."
+        assert strip_emojis(text) == text
+
+
+# ---------------------------------------------------------------------------
 # mask_pii
 # ---------------------------------------------------------------------------
 
@@ -177,6 +195,11 @@ class TestBasicClean:
         # aucun masquage ne doit avoir eu lieu — les masks restent vides.
         _, masks = basic_clean("Email: user@domain.com")
         assert masks["emails"] == []
+
+    def test_remove_emoji_option(self):
+        text, _ = basic_clean("Hello 🌟 world!", remove_emoji=True)
+        assert "🌟" not in text
+        assert "Hello" in text
 
     def test_multiple_spaces_collapsed(self):
         text, _ = basic_clean("Hello   world")

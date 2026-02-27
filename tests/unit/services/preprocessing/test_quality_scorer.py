@@ -63,6 +63,13 @@ class TestNoiseScore:
         for key, val in result.items():
             assert val == round(val, 3), f"key '{key}' not rounded: {val}"
 
+    def test_very_long_sentence_triggers_elif_branch(self):
+        # avg_sent_len > 250 déclenche le elif (ligne 45 quality_scorer.py)
+        long_text = "word " * 60 + "."  # une seule phrase de ~300 chars
+        result = noise_score(long_text)
+        assert result["avg_sent_len"] > 250
+        assert result["score"] > 0
+
 
 # ---------------------------------------------------------------------------
 # assess_quality
