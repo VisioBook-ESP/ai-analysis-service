@@ -1,15 +1,16 @@
-import time
 import logging
-from typing import Awaitable, Callable, Dict, Any, Optional
-
-StepCallback = Callable[[str], Awaitable[None]]
+import time
+from typing import Any, Awaitable, Callable, Dict, Optional
 
 from src.services.preprocessing import TextPreprocessor
+
 from .llm_client import LLMClient
 from .prompts import SYSTEM_PROMPT, build_analysis_prompt
 from .response_parser import ResponseParser
 
 logger = logging.getLogger(__name__)
+
+StepCallback = Callable[[str], Awaitable[None]]
 
 
 class AnalysisOptions:
@@ -86,7 +87,9 @@ class Analyzer:
         if on_step:
             await on_step("llm_call")
         options_dict = options.to_dict()
-        user_prompt = build_analysis_prompt(cleaned_text, detected_language, options_dict)
+        user_prompt = build_analysis_prompt(
+            cleaned_text, detected_language, options_dict
+        )
 
         try:
             raw_response = await self.llm_client.chat_completion(
@@ -105,7 +108,9 @@ class Analyzer:
         # Step 5: Enrich summary with text stats
         if "summary" in parsed:
             parsed["summary"]["original_length"] = len(text)
-            parsed["summary"]["summary_length"] = len(parsed["summary"].get("summary", ""))
+            parsed["summary"]["summary_length"] = len(
+                parsed["summary"].get("summary", "")
+            )
 
         # Step 6: Assemble result
         return {

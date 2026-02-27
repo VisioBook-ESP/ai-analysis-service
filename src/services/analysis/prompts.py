@@ -14,7 +14,8 @@ def build_analysis_prompt(text: str, language: str, options: dict) -> str:
     sections = []
 
     if options.get("characters"):
-        sections.append('''"characters": [
+        sections.append(
+            """"characters": [
     {
       "name": "string",
       "role": "protagonist|antagonist|secondary|narrator|mentioned",
@@ -25,10 +26,12 @@ def build_analysis_prompt(text: str, language: str, options: dict) -> str:
       "actions": ["string"],
       "relationships": [{"target": "string", "type": "string", "description": "string"}]
     }
-  ]''')
+  ]"""
+        )
 
     if options.get("scenes"):
-        sections.append('''"scenes": [
+        sections.append(
+            """"scenes": [
     {
       "scene_id": "scene_001",
       "title": "string",
@@ -52,10 +55,12 @@ def build_analysis_prompt(text: str, language: str, options: dict) -> str:
       "key_events": ["string"],
       "objects": ["string"]
     }
-  ]''')
+  ]"""
+        )
 
     if options.get("narrative"):
-        sections.append('''"narrative": {
+        sections.append(
+            """"narrative": {
     "themes": ["string"],
     "tone": "string",
     "style": "string",
@@ -63,20 +68,25 @@ def build_analysis_prompt(text: str, language: str, options: dict) -> str:
     "tension_level": "low|medium|high|escalating|declining",
     "pacing": "string",
     "literary_devices": ["string"]
-  }''')
+  }"""
+        )
 
-    sections.append('''"sentiment": {
+    sections.append(
+        """"sentiment": {
     "overall": "positive|negative|mixed|neutral",
     "polarity": "float between -1.0 and 1.0",
     "nuances": ["string"],
     "emotional_arc": "string"
-  }''')
+  }"""
+    )
 
     if options.get("summary"):
-        sections.append('''"summary": {
+        sections.append(
+            """"summary": {
     "summary": "string (concise abstractive summary)",
     "key_points": ["string"]
-  }''')
+  }"""
+        )
 
     schema = "{\n  " + ",\n  ".join(sections) + "\n}"
 

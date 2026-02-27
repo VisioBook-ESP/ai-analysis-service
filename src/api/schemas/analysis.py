@@ -5,6 +5,7 @@ from datetime import datetime
 
 # ---- Request ----
 
+
 class AnalysisOptions(BaseModel):
     characters: bool = Field(True, description="Extraire l'analyse des personnages")
     scenes: bool = Field(True, description="Extraire l'analyse des scenes")
@@ -12,22 +13,31 @@ class AnalysisOptions(BaseModel):
     summary: bool = Field(True, description="Generer un resume")
     mask_pii: bool = Field(True, description="Masquer les donnees personnelles")
     remove_links: bool = Field(False, description="Supprimer les URLs")
-    max_summary_length: int = Field(200, ge=50, le=1000, description="Longueur max du resume")
+    max_summary_length: int = Field(
+        200, ge=50, le=1000, description="Longueur max du resume"
+    )
 
 
 class AnalyzeRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Texte a analyser")
     language: Optional[str] = Field("auto", description="Code langue (fr/en/auto)")
-    options: AnalysisOptions = Field(default_factory=AnalysisOptions, description="Options d'analyse")
+    options: AnalysisOptions = Field(
+        default_factory=AnalysisOptions, description="Options d'analyse"
+    )
 
 
 class BatchAnalyzeRequest(BaseModel):
-    texts: List[str] = Field(..., min_length=1, max_length=50, description="Liste de textes")
+    texts: List[str] = Field(
+        ..., min_length=1, max_length=50, description="Liste de textes"
+    )
     language: Optional[str] = Field("auto", description="Code langue")
-    options: AnalysisOptions = Field(default_factory=AnalysisOptions, description="Options d'analyse")
+    options: AnalysisOptions = Field(
+        default_factory=AnalysisOptions, description="Options d'analyse"
+    )
 
 
 # ---- Response: Text Stats ----
+
 
 class TextStats(BaseModel):
     original_length: int
@@ -39,6 +49,7 @@ class TextStats(BaseModel):
 
 
 # ---- Response: Characters ----
+
 
 class CharacterRelationship(BaseModel):
     target: str
@@ -58,6 +69,7 @@ class Character(BaseModel):
 
 
 # ---- Response: Scenes ----
+
 
 class SoundTexture(BaseModel):
     sounds: List[str]
@@ -91,6 +103,7 @@ class Scene(BaseModel):
 
 # ---- Response: Narrative ----
 
+
 class NarrativeAnalysis(BaseModel):
     themes: List[str]
     tone: str
@@ -103,6 +116,7 @@ class NarrativeAnalysis(BaseModel):
 
 # ---- Response: Sentiment ----
 
+
 class SentimentAnalysis(BaseModel):
     overall: str
     polarity: float
@@ -112,6 +126,7 @@ class SentimentAnalysis(BaseModel):
 
 # ---- Response: Summary ----
 
+
 class SummaryResult(BaseModel):
     summary: str
     key_points: List[str]
@@ -120,6 +135,7 @@ class SummaryResult(BaseModel):
 
 
 # ---- Top-level Response ----
+
 
 class AnalyzeResponse(BaseModel):
     language: str
@@ -141,14 +157,16 @@ class BatchAnalyzeResponse(BaseModel):
 
 # ---- Job (async polling) ----
 
+
 class JobSubmittedResponse(BaseModel):
     job_id: str
     status: str
 
+
 class JobStatusResponse(BaseModel):
     job_id: str
-    status: str                          # pending | processing | completed | failed
-    step: Optional[str] = None           # preprocessing | llm_call | parsing
+    status: str  # pending | processing | completed | failed
+    step: Optional[str] = None  # preprocessing | llm_call | parsing
     result: Optional[AnalyzeResponse] = None
     error: Optional[str] = None
     created_at: datetime

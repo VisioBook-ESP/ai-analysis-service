@@ -41,7 +41,9 @@ def _build_response_data(result: dict) -> dict:
     if "characters" in result:
         response_data["characters"] = [
             Character(
-                relationships=[CharacterRelationship(**r) for r in c.get("relationships", [])],
+                relationships=[
+                    CharacterRelationship(**r) for r in c.get("relationships", [])
+                ],
                 **{k: v for k, v in c.items() if k != "relationships"},
             )
             for c in result["characters"]
@@ -53,7 +55,11 @@ def _build_response_data(result: dict) -> dict:
                 setting=SceneSetting(**s["setting"]),
                 atmosphere=SceneAtmosphere(
                     sounds_textures=SoundTexture(**s["atmosphere"]["sounds_textures"]),
-                    **{k: v for k, v in s["atmosphere"].items() if k != "sounds_textures"},
+                    **{
+                        k: v
+                        for k, v in s["atmosphere"].items()
+                        if k != "sounds_textures"
+                    },
                 ),
                 **{k: v for k, v in s.items() if k not in ("setting", "atmosphere")},
             )
@@ -127,7 +133,9 @@ async def analyze(request: AnalyzeRequest) -> JobSubmittedResponse:
 async def get_job(job_id: str) -> JobStatusResponse:
     job = job_store.get(job_id)
     if job is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
+        )
 
     return JobStatusResponse(
         job_id=job.job_id,
@@ -140,7 +148,11 @@ async def get_job(job_id: str) -> JobStatusResponse:
     )
 
 
-@router.post("/analyze/batch", response_model=BatchAnalyzeResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "/analyze/batch",
+    response_model=BatchAnalyzeResponse,
+    status_code=status.HTTP_200_OK,
+)
 async def analyze_batch(request: BatchAnalyzeRequest) -> BatchAnalyzeResponse:
     if len(request.texts) > 50:
         raise HTTPException(
@@ -170,7 +182,9 @@ async def analyze_batch(request: BatchAnalyzeRequest) -> BatchAnalyzeResponse:
                 error_count += 1
                 continue
 
-            result = await _analyzer.analyze(text=text, language=request.language, options=service_options)
+            result = await _analyzer.analyze(
+                text=text, language=request.language, options=service_options
+            )
             results.append(AnalyzeResponse(**_build_response_data(result)))
             success_count += 1
         except Exception:

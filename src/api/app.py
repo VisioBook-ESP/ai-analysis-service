@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI):
     yield
     cleanup_task.cancel()
     from src.api.routes.analysis import _analyzer
+
     await _analyzer.close()
 
 

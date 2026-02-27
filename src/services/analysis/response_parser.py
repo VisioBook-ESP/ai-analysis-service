@@ -35,7 +35,9 @@ class ResponseParser:
                 "name": str(c.get("name", "Unknown")),
                 "role": str(c.get("role", "secondary")),
                 "physical_description": str(c.get("physical_description", "")),
-                "personality_traits": self._ensure_str_list(c.get("personality_traits", [])),
+                "personality_traits": self._ensure_str_list(
+                    c.get("personality_traits", [])
+                ),
                 "emotions": self._ensure_str_list(c.get("emotions", [])),
                 "motivations": self._ensure_str_list(c.get("motivations", [])),
                 "actions": self._ensure_str_list(c.get("actions", [])),
@@ -66,7 +68,9 @@ class ResponseParser:
                 "scene_id": str(s.get("scene_id", f"scene_{i + 1:03d}")),
                 "title": str(s.get("title", "")),
                 "text_excerpt": str(s.get("text_excerpt", "")),
-                "characters_present": self._ensure_str_list(s.get("characters_present", [])),
+                "characters_present": self._ensure_str_list(
+                    s.get("characters_present", [])
+                ),
                 "setting": self._parse_setting(s.get("setting", {})),
                 "atmosphere": self._parse_atmosphere(s.get("atmosphere", {})),
                 "key_events": self._ensure_str_list(s.get("key_events", [])),
@@ -106,9 +110,13 @@ class ResponseParser:
     def _parse_narrative(self, narr: Any) -> Dict:
         if not isinstance(narr, dict):
             return {
-                "themes": [], "tone": "neutral", "style": "",
-                "point_of_view": "", "tension_level": "low",
-                "pacing": "", "literary_devices": [],
+                "themes": [],
+                "tone": "neutral",
+                "style": "",
+                "point_of_view": "",
+                "tension_level": "low",
+                "pacing": "",
+                "literary_devices": [],
             }
         return {
             "themes": self._ensure_str_list(narr.get("themes", [])),
@@ -123,7 +131,12 @@ class ResponseParser:
     @staticmethod
     def _parse_sentiment(sent: Any) -> Dict:
         if not isinstance(sent, dict):
-            return {"overall": "neutral", "polarity": 0.0, "nuances": [], "emotional_arc": ""}
+            return {
+                "overall": "neutral",
+                "polarity": 0.0,
+                "nuances": [],
+                "emotional_arc": "",
+            }
         polarity = sent.get("polarity", 0.0)
         try:
             polarity = max(-1.0, min(1.0, float(polarity)))
@@ -132,7 +145,11 @@ class ResponseParser:
         return {
             "overall": str(sent.get("overall", "neutral")),
             "polarity": polarity,
-            "nuances": [str(n) for n in sent.get("nuances", []) if n] if isinstance(sent.get("nuances"), list) else [],
+            "nuances": (
+                [str(n) for n in sent.get("nuances", []) if n]
+                if isinstance(sent.get("nuances"), list)
+                else []
+            ),
             "emotional_arc": str(sent.get("emotional_arc", "")),
         }
 
@@ -142,7 +159,11 @@ class ResponseParser:
             return {"summary": "", "key_points": []}
         return {
             "summary": str(summ.get("summary", "")),
-            "key_points": [str(k) for k in summ.get("key_points", []) if k] if isinstance(summ.get("key_points"), list) else [],
+            "key_points": (
+                [str(k) for k in summ.get("key_points", []) if k]
+                if isinstance(summ.get("key_points"), list)
+                else []
+            ),
         }
 
     @staticmethod

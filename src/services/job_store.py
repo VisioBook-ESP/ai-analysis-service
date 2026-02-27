@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 class Job:
     def __init__(self, job_id: str):
         self.job_id = job_id
-        self.status: str = "pending"   # pending | processing | completed | failed
+        self.status: str = "pending"  # pending | processing | completed | failed
         self.step: Optional[str] = None  # preprocessing | llm_call | parsing
         self.result: Optional[Dict[str, Any]] = None
         self.error: Optional[str] = None
