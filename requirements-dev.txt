@@ -4,5 +4,11 @@ ruff
 pylint
 mypy
 
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.24.0
+pytest-cov>=6.0.0
+respx>=0.21.0
+
 # Include production requirements
 -r requirements-prod.txt

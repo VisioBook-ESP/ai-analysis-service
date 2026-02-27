@@ -10,6 +10,10 @@ __pycache__/
 *$py.class
 *.so
 
+# Tests
+.coverage
+.pytest_cache/
+
 # Distribution / packaging
 .Python
 build/
