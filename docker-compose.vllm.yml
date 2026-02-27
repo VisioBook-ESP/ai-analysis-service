@@ -1,7 +1,7 @@
 name: llm-server
 services:
   vllm:
-    image: vllm/vllm-openai:latest
+    image: vllm/vllm-openai:latest-cu130
     ipc: host
     ports:
       - "${VLLM_PORT:-8000}:8000"
@@ -11,6 +11,8 @@ services:
       - HF_TOKEN=${HF_TOKEN}
       - VLLM_FLASH_ATTN_VERSION=2
       - NVIDIA_VISIBLE_DEVICES=all
+      - LD_PRELOAD=/lib/x86_64-linux-gnu/libcuda.so.1
+      - HF_HUB_OFFLINE=1
     deploy:
       resources:
         reservations:
