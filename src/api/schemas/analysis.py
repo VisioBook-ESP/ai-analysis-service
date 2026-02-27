@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
+from datetime import datetime
 
 
 # ---- Request ----
@@ -136,3 +137,19 @@ class BatchAnalyzeResponse(BaseModel):
     total_processing_time_ms: float
     success_count: int
     error_count: int
+
+
+# ---- Job (async polling) ----
+
+class JobSubmittedResponse(BaseModel):
+    job_id: str
+    status: str
+
+class JobStatusResponse(BaseModel):
+    job_id: str
+    status: str                          # pending | processing | completed | failed
+    step: Optional[str] = None           # preprocessing | llm_call | parsing
+    result: Optional[AnalyzeResponse] = None
+    error: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime

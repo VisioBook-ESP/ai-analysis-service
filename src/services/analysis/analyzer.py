@@ -1,6 +1,8 @@
 import time
 import logging
-from typing import Dict, Any, Optional
+from typing import Awaitable, Callable, Dict, Any, Optional
+
+StepCallback = Callable[[str], Awaitable[None]]
 
 from src.services.preprocessing import TextPreprocessor
 from .llm_client import LLMClient
@@ -50,13 +52,16 @@ class Analyzer:
         text: str,
         language: str = "auto",
         options: Optional[AnalysisOptions] = None,
+        on_step: Optional[StepCallback] = None,
     ) -> Dict[str, Any]:
         if options is None:
             options = AnalysisOptions()
 
         start_time = time.time()
 
-        # Step 1: Preprocessing (synchronous, kept as-is)
+        # Step 1: Preprocessing
+        if on_step:
+            await on_step("preprocessing")
         preprocessed = self.preprocessor.preprocess(
             text,
             language=language,
@@ -78,6 +83,8 @@ class Analyzer:
         }
 
         # Step 3: Call LLM
+        if on_step:
+            await on_step("llm_call")
         options_dict = options.to_dict()
         user_prompt = build_analysis_prompt(cleaned_text, detected_language, options_dict)
 
@@ -91,6 +98,8 @@ class Analyzer:
             raise RuntimeError(f"LLM analysis failed: {e}")
 
         # Step 4: Parse LLM output
+        if on_step:
+            await on_step("parsing")
         parsed = self.parser.parse(raw_response, options_dict)
 
         # Step 5: Enrich summary with text stats
