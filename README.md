@@ -213,7 +213,7 @@ docker compose -f docker-compose.vllm.yml up -d
 ```
 
 **Prérequis serveur :**
-- NVIDIA GPU (Blackwell/Ampere/Turing)
+- NVIDIA GPU (Blackwell/Ampere/Turin)
 - Driver ≥ 525, CUDA 13.0 pour GPU Blackwell (RTX 50xx)
 - NVIDIA Container Toolkit
 
