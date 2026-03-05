@@ -161,19 +161,6 @@ curl -fsSL https://tailscale.com/install.sh | sh
 sudo tailscale up --authkey <auth_key>
 ```
 
-### Exposer vLLM sur toutes les interfaces
-
-Dans `docker-compose.vllm.yml`, remplacer :
-```yaml
-ports:
-  - "127.0.0.1:${VLLM_PORT:-8000}:8000"
-```
-par :
-```yaml
-ports:
-  - "${VLLM_PORT:-8000}:8000"
-```
-
 Puis redémarrer : `docker compose -f docker-compose.vllm.yml down && docker compose -f docker-compose.vllm.yml up -d`
 
 ### Vérifier la connectivité
