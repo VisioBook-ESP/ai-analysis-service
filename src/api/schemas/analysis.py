@@ -1,16 +1,20 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
+from datetime import datetime
+
+
+# ---- Request ----
 
 
 class AnalysisOptions(BaseModel):
-    semantic: bool = Field(True, description="Activer l'analyse semantique")
-    scenes: bool = Field(True, description="Activer l'extraction de scenes")
-    summarize: bool = Field(True, description="Activer le resume")
+    characters: bool = Field(True, description="Extraire l'analyse des personnages")
+    scenes: bool = Field(True, description="Extraire l'analyse des scenes")
+    narrative: bool = Field(True, description="Extraire l'analyse narrative")
+    summary: bool = Field(True, description="Generer un resume")
     mask_pii: bool = Field(True, description="Masquer les donnees personnelles")
     remove_links: bool = Field(False, description="Supprimer les URLs")
-    return_embeddings: bool = Field(False, description="Retourner les embeddings")
     max_summary_length: int = Field(
-        150, ge=50, le=500, description="Longueur max du resume"
+        200, ge=50, le=1000, description="Longueur max du resume"
     )
 
 
@@ -32,6 +36,9 @@ class BatchAnalyzeRequest(BaseModel):
     )
 
 
+# ---- Response: Text Stats ----
+
+
 class TextStats(BaseModel):
     original_length: int
     cleaned_length: int
@@ -41,73 +48,102 @@ class TextStats(BaseModel):
     quality_assessment: str
 
 
-class Entity(BaseModel):
-    text: str
+# ---- Response: Characters ----
+
+
+class CharacterRelationship(BaseModel):
+    target: str
     type: str
-    start: int
-    end: int
-
-
-class SentimentScore(BaseModel):
-    polarity: float
-    subjectivity: float
-
-
-class SemanticResult(BaseModel):
-    entities: List[Entity]
-    keywords: List[str]
-    topics: List[str]
-    sentiment: SentimentScore
-    embeddings: Optional[List[float]] = None
+    description: str
 
 
 class Character(BaseModel):
     name: str
-    traits: List[str]
+    role: str
+    physical_description: str
+    personality_traits: List[str]
     emotions: List[str]
+    motivations: List[str]
+    actions: List[str]
+    relationships: List[CharacterRelationship] = []
 
 
-class Setting(BaseModel):
+# ---- Response: Scenes ----
+
+
+class SoundTexture(BaseModel):
+    sounds: List[str]
+    textures: List[str]
+
+
+class SceneSetting(BaseModel):
     location: str
+    time_period: str
     time_of_day: str
-    lighting: List[str]
 
 
-class VisualAttributes(BaseModel):
+class SceneAtmosphere(BaseModel):
+    mood: str
+    lighting: str
+    weather: str
     colors: List[str]
-    lighting: List[str]
+    sounds_textures: SoundTexture
 
 
 class Scene(BaseModel):
     scene_id: str
-    text: str
-    characters: List[Character]
-    setting: Setting
-    atmosphere: str
+    title: str
+    text_excerpt: str
+    characters_present: List[str]
+    setting: SceneSetting
+    atmosphere: SceneAtmosphere
+    key_events: List[str]
     objects: List[str]
-    actions: List[str]
-    visual_attributes: VisualAttributes
 
 
-class SceneResult(BaseModel):
-    scene_count: int
-    scenes: List[Scene]
+# ---- Response: Narrative ----
+
+
+class NarrativeAnalysis(BaseModel):
+    themes: List[str]
+    tone: str
+    style: str
+    point_of_view: str
+    tension_level: str
+    pacing: str
+    literary_devices: List[str]
+
+
+# ---- Response: Sentiment ----
+
+
+class SentimentAnalysis(BaseModel):
+    overall: str
+    polarity: float
+    nuances: List[str]
+    emotional_arc: str
+
+
+# ---- Response: Summary ----
 
 
 class SummaryResult(BaseModel):
-    abstractive_summary: str
-    extractive_sentences: List[str]
+    summary: str
     key_points: List[str]
     original_length: int
     summary_length: int
-    length_reduction_percent: float
+
+
+# ---- Top-level Response ----
 
 
 class AnalyzeResponse(BaseModel):
     language: str
     text_stats: TextStats
-    semantic: Optional[SemanticResult] = None
-    scenes: Optional[SceneResult] = None
+    characters: Optional[List[Character]] = None
+    scenes: Optional[List[Scene]] = None
+    narrative: Optional[NarrativeAnalysis] = None
+    sentiment: Optional[SentimentAnalysis] = None
     summary: Optional[SummaryResult] = None
     processing_time_ms: float
 
@@ -117,3 +153,21 @@ class BatchAnalyzeResponse(BaseModel):
     total_processing_time_ms: float
     success_count: int
     error_count: int
+
+
+# ---- Job (async polling) ----
+
+
+class JobSubmittedResponse(BaseModel):
+    job_id: str
+    status: str
+
+
+class JobStatusResponse(BaseModel):
+    job_id: str
+    status: str  # pending | processing | completed | failed
+    step: Optional[str] = None  # preprocessing | llm_call | parsing
+    result: Optional[AnalyzeResponse] = None
+    error: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime

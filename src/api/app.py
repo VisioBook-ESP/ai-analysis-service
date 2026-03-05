@@ -1,16 +1,37 @@
+import asyncio
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 from src.api.routes.health import router as health_router
 from src.api.routes.analysis import router as analysis_router
 from src.config.settings import get_settings
+from src.services.job_store import job_store
 
 settings = get_settings()
+
+
+async def _cleanup_jobs_loop():
+    while True:
+        await asyncio.sleep(3600)
+        await job_store.cleanup(max_age_hours=1)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    cleanup_task = asyncio.create_task(_cleanup_jobs_loop())
+    yield
+    cleanup_task.cancel()
+    from src.api.routes.analysis import _analyzer
+
+    await _analyzer.close()
+
 
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="Service d'analyse IA pour extraction d'informations textuelles et generation de prompts image",
+    description="Service d'analyse IA via LLM (vLLM backend)",
     default_response_class=ORJSONResponse,
+    lifespan=lifespan,
 )
 
 
