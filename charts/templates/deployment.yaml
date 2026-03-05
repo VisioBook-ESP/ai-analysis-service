@@ -10,6 +10,14 @@ metadata:
     {{- end }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit | default 2 }}
+  progressDeadlineSeconds: {{ .Values.progressDeadlineSeconds | default 300 }}
+  minReadySeconds: {{ .Values.minReadySeconds | default 0 }}
+  strategy:
+    type: {{ .Values.strategy.type }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.strategy.rollingUpdate.maxUnavailable | default 0 }}
+      maxSurge: {{ .Values.strategy.rollingUpdate.maxSurge | default 1 }}
   selector:
     matchLabels:
       app: {{ include "ai-analysis-service.name" . }}
@@ -23,6 +31,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
       annotations:
+        checksum/chart: {{ print (toYaml .Values) (.Files.Glob "**" | toString) | sha256sum | quote }}
         sidecar.istio.io/inject: "{{ .Values.istio.injection }}"
     spec:
       containers:
