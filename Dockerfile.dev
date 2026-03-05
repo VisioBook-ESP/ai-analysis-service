@@ -1,4 +1,3 @@
-# Image Python 3.12
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -11,28 +10,21 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
-    git \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl --version
+    && rm -rf /var/lib/apt/lists/*
 
-# Copie et installation du requirements (dev inclut prod)
 COPY requirements-prod.txt requirements-dev.txt ./
 RUN pip install --upgrade pip && \
-    pip install torch==2.9.0 torchvision==0.24.0 --index-url https://download.pytorch.org/whl/cu126 && \
-    pip install -r requirements-dev.txt --no-deps || pip install -r requirements-dev.txt
+    pip install -r requirements-dev.txt && \
+    python -m spacy download fr_core_news_lg && \
+    python -m spacy download en_core_web_lg
 
-# Copie du source code
 COPY src ./src
-COPY .env .env
 
-RUN mkdir -p data models
+RUN mkdir -p data
 
-# Port expose
 EXPOSE 8083
 
-# Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8083/health || exit 1
 
-# Commande de demarrage avec hot-reload pour le developpement
 CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8083", "--reload"]
