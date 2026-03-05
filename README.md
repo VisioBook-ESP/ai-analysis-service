@@ -142,6 +142,58 @@ Variables d'environnement (fichier `.env`) :
 
 ---
 
+## Connectivité K8s → vLLM (Tailscale)
+
+Le service tourne sur Kubernetes mais le serveur vLLM est sur une VM sans IP publique. La connexion passe par **Tailscale** (VPN mesh WireGuard, IPs fixes en `100.x.x.x`).
+
+### Installation sur la VM vLLM
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up --authkey <auth_key>
+tailscale ip -4   # note l'IP Tailscale (ex: 100.120.93.126)
+```
+
+### Installation sur le(s) nœud(s) K8s
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up --authkey <auth_key>
+```
+
+### Exposer vLLM sur toutes les interfaces
+
+Dans `docker-compose.vllm.yml`, remplacer :
+```yaml
+ports:
+  - "127.0.0.1:${VLLM_PORT:-8000}:8000"
+```
+par :
+```yaml
+ports:
+  - "${VLLM_PORT:-8000}:8000"
+```
+
+Puis redémarrer : `docker compose -f docker-compose.vllm.yml down && docker compose -f docker-compose.vllm.yml up -d`
+
+### Vérifier la connectivité
+
+Depuis le nœud K8s :
+```bash
+# Santé vLLM
+curl http://100.120.93.126:8000/health
+
+# Test d'inférence
+curl http://100.120.93.126:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <VLLM_API_KEY>" \
+  -d '{"model": "mistralai/Ministral-3-3B-Instruct-2512-BF16", "messages": [{"role": "user", "content": "Dis bonjour."}], "max_tokens": 20}'
+```
+
+Configurer `VLLM_BASE_URL=http://100.120.93.126:8000` dans le secret/configmap K8s (ou `charts/values.yaml`).
+
+---
+
 ## Lancer en local
 
 ### Prérequis
