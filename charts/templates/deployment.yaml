@@ -21,7 +21,6 @@ spec:
   selector:
     matchLabels:
       app: {{ include "ai-analysis-service.name" . }}
-      version: {{ .Values.image.tag | quote }}
   template:
     metadata:
       labels:
