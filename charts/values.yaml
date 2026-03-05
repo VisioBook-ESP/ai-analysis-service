@@ -77,5 +77,5 @@ env:
   APP_VERSION: 0.1.0
   APP_PORT: 8083
   SUMMARIZER_MODEL: facebook/bart-large-cnn
-  VLLM_BASE_URL: http://localhost:8000
+  VLLM_BASE_URL: http://100.120.93.126:8000
   VLLM_API_KEY: 89f6f043c3cac05ee245f9d61fe2dc2ea43a0fe9688d695d512bdfa712bfb693
