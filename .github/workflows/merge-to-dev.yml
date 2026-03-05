@@ -49,6 +49,7 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
+            type=sha,prefix=sha-,format=short
             type=raw,value=latest
 
       - name: Set image tag output
