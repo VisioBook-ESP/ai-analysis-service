@@ -42,7 +42,6 @@ class AnalysisOptions:
 
 
 class Analyzer:
-
     def __init__(self):
         self.preprocessor = TextPreprocessor()
         self.llm_client = LLMClient()
