@@ -22,6 +22,12 @@ class Settings(BaseSettings):
     max_text_length: int = 500_000
     max_batch_size: int = 50
 
+    # NATS JetStream
+    NATS_URL: str = "nats://nats.visiobook-namespace.svc.cluster.local:4222"
+    NATS_USER: str = ""
+    NATS_PASSWORD: str = ""
+    NATS_STREAM_NAME: str = "VISIOBOOK_PROJECT"
+
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )

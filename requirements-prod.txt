@@ -20,6 +20,9 @@ spacy==3.8.8
 # System monitoring
 psutil==7.1.3
 
+# NATS JetStream
+nats-py>=2.9.0
+
 
 # Core dependencies
 anyio==4.11.0

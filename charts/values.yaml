@@ -79,3 +79,7 @@ env:
   SUMMARIZER_MODEL: facebook/bart-large-cnn
   VLLM_BASE_URL: http://100.120.93.126:8000
   VLLM_API_KEY: 89f6f043c3cac05ee245f9d61fe2dc2ea43a0fe9688d695d512bdfa712bfb693
+  NATS_URL: nats://nats.visiobook-namespace.svc.cluster.local:4222
+  NATS_USER: ""
+  NATS_PASSWORD: ""
+  NATS_STREAM_NAME: VISIOBOOK_PROJECT
