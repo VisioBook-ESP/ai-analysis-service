@@ -127,16 +127,20 @@ class WorkflowHandler:
 
             scenes.append(
                 {
-                    "order": scene.get("scene_id", i)
-                    if isinstance(scene.get("scene_id"), int)
-                    else i,
+                    "order": (
+                        scene.get("scene_id", i)
+                        if isinstance(scene.get("scene_id"), int)
+                        else i
+                    ),
                     "text": text,
                     "description": scene.get("title", ""),
                     "imagePrompt": image_prompt,
                     "duration": duration,
-                    "sentiment": scene.get("atmosphere", {}).get("mood", "neutral")
-                    if isinstance(scene.get("atmosphere"), dict)
-                    else "neutral",
+                    "sentiment": (
+                        scene.get("atmosphere", {}).get("mood", "neutral")
+                        if isinstance(scene.get("atmosphere"), dict)
+                        else "neutral"
+                    ),
                 }
             )
         return scenes
