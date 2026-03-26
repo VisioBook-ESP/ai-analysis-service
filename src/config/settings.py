@@ -3,7 +3,6 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-
     # API
     app_name: str = "ai-analysis-service"
     app_version: str = "2.0.0"

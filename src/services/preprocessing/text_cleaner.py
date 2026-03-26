@@ -91,7 +91,7 @@ def basic_clean(
     remove_links: bool = False,
     do_mask_pii: bool = False,
     remove_emoji: bool = False,
-    lowercase: bool = False
+    lowercase: bool = False,
 ) -> Tuple[str, Dict[str, List[str]]]:
     meta = {"emails": [], "phones": [], "ibans": []}
 

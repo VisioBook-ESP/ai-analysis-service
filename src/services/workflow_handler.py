@@ -1,5 +1,4 @@
 import logging
-import asyncio
 from src.services.analysis.analyzer import Analyzer
 from src.services.nats_client import NatsClient
 
@@ -35,7 +34,11 @@ class WorkflowHandler:
 
         if not content_text:
             await self._publish_failed(
-                project_id, version_id, execution_id, user_id, correlation_id,
+                project_id,
+                version_id,
+                execution_id,
+                user_id,
+                correlation_id,
                 "No content text provided",
             )
             return
@@ -69,15 +72,18 @@ class WorkflowHandler:
             characters = self._map_characters(result.get("characters", []))
 
             # Publish analysis completed
-            await self.nats.publish(SUBJECT_ANALYSIS_COMPLETED, {
-                "projectId": project_id,
-                "versionId": version_id,
-                "executionId": execution_id,
-                "userId": user_id,
-                "scenes": scenes,
-                "characters": characters,
-                "correlationId": correlation_id,
-            })
+            await self.nats.publish(
+                SUBJECT_ANALYSIS_COMPLETED,
+                {
+                    "projectId": project_id,
+                    "versionId": version_id,
+                    "executionId": execution_id,
+                    "userId": user_id,
+                    "scenes": scenes,
+                    "characters": characters,
+                    "correlationId": correlation_id,
+                },
+            )
 
             # Publish progress: done (100%)
             await self._publish_progress(
@@ -93,11 +99,17 @@ class WorkflowHandler:
 
         except Exception as e:
             logger.error(
-                "Analysis failed for projectId=%s: %s", project_id, str(e),
+                "Analysis failed for projectId=%s: %s",
+                project_id,
+                str(e),
                 exc_info=True,
             )
             await self._publish_failed(
-                project_id, version_id, execution_id, user_id, correlation_id,
+                project_id,
+                version_id,
+                execution_id,
+                user_id,
+                correlation_id,
                 str(e),
             )
 
@@ -113,15 +125,20 @@ class WorkflowHandler:
             word_count = len(text.split()) if text else 0
             duration = max(3, min(30, int(word_count / 20)))  # 3-30 seconds
 
-            scenes.append({
-                "order": scene.get("scene_id", i) if isinstance(scene.get("scene_id"), int) else i,
-                "text": text,
-                "description": scene.get("title", ""),
-                "imagePrompt": image_prompt,
-                "duration": duration,
-                "sentiment": scene.get("atmosphere", {}).get("mood", "neutral")
-                    if isinstance(scene.get("atmosphere"), dict) else "neutral",
-            })
+            scenes.append(
+                {
+                    "order": scene.get("scene_id", i)
+                    if isinstance(scene.get("scene_id"), int)
+                    else i,
+                    "text": text,
+                    "description": scene.get("title", ""),
+                    "imagePrompt": image_prompt,
+                    "duration": duration,
+                    "sentiment": scene.get("atmosphere", {}).get("mood", "neutral")
+                    if isinstance(scene.get("atmosphere"), dict)
+                    else "neutral",
+                }
+            )
         return scenes
 
     def _map_characters(self, raw_characters: list) -> list:
@@ -132,12 +149,14 @@ class WorkflowHandler:
             physical = char.get("physical_description", "")
             description = f"{role}. {physical}".strip(". ") if role or physical else ""
 
-            characters.append({
-                "name": char.get("name", ""),
-                "description": description,
-                "aliases": [],
-                "traits": char.get("personality_traits", []),
-            })
+            characters.append(
+                {
+                    "name": char.get("name", ""),
+                    "description": description,
+                    "aliases": [],
+                    "traits": char.get("personality_traits", []),
+                }
+            )
         return characters
 
     def _build_image_prompt(self, scene: dict) -> str:
@@ -180,27 +199,42 @@ class WorkflowHandler:
         return ". ".join(parts) if parts else "A scene from the story"
 
     async def _publish_progress(
-        self, project_id: str, version_id: str, execution_id: str,
-        correlation_id: str, progress: int,
+        self,
+        project_id: str,
+        version_id: str,
+        execution_id: str,
+        correlation_id: str,
+        progress: int,
     ):
-        await self.nats.publish(SUBJECT_PROGRESS, {
-            "projectId": project_id,
-            "versionId": version_id,
-            "executionId": execution_id,
-            "step": "analysis",
-            "progress": progress,
-            "correlationId": correlation_id,
-        })
+        await self.nats.publish(
+            SUBJECT_PROGRESS,
+            {
+                "projectId": project_id,
+                "versionId": version_id,
+                "executionId": execution_id,
+                "step": "analysis",
+                "progress": progress,
+                "correlationId": correlation_id,
+            },
+        )
 
     async def _publish_failed(
-        self, project_id: str, version_id: str, execution_id: str,
-        user_id: str, correlation_id: str, error: str,
+        self,
+        project_id: str,
+        version_id: str,
+        execution_id: str,
+        user_id: str,
+        correlation_id: str,
+        error: str,
     ):
-        await self.nats.publish(SUBJECT_ANALYSIS_FAILED, {
-            "projectId": project_id,
-            "versionId": version_id,
-            "executionId": execution_id,
-            "userId": user_id,
-            "error": error,
-            "correlationId": correlation_id,
-        })
+        await self.nats.publish(
+            SUBJECT_ANALYSIS_FAILED,
+            {
+                "projectId": project_id,
+                "versionId": version_id,
+                "executionId": execution_id,
+                "userId": user_id,
+                "error": error,
+                "correlationId": correlation_id,
+            },
+        )

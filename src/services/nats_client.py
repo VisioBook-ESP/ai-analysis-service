@@ -2,7 +2,6 @@ import nats
 from nats.js.api import ConsumerConfig, AckPolicy
 import json
 import logging
-import asyncio
 from typing import Callable, Awaitable
 
 logger = logging.getLogger(__name__)

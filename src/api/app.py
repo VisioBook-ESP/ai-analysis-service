@@ -18,13 +18,17 @@ settings = get_settings()
 _nats_client: NatsClient | None = None
 
 
-async def connect_nats_with_retry(nats_client: NatsClient, max_retries: int = 5, delay: int = 3) -> bool:
+async def connect_nats_with_retry(
+    nats_client: NatsClient, max_retries: int = 5, delay: int = 3
+) -> bool:
     for attempt in range(1, max_retries + 1):
         try:
             await nats_client.connect()
             return True
         except Exception as e:
-            logger.warning("NATS connection attempt %d/%d failed: %s", attempt, max_retries, e)
+            logger.warning(
+                "NATS connection attempt %d/%d failed: %s", attempt, max_retries, e
+            )
             if attempt < max_retries:
                 await asyncio.sleep(delay * attempt)
     logger.error("Could not connect to NATS after %d attempts", max_retries)
@@ -88,6 +92,7 @@ async def lifespan(app: FastAPI):
         _nats_client = None
 
     from src.api.routes.analysis import _analyzer
+
     await _analyzer.close()
 
 
