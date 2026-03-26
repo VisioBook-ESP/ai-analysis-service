@@ -48,24 +48,23 @@ async def lifespan(app: FastAPI):
     cleanup_task = asyncio.create_task(_cleanup_jobs_loop())
     nats_task = None
 
-    # Initialize NATS client
-    nats_client = NatsClient(
-        url=settings.NATS_URL,
-        user=settings.NATS_USER,
-        password=settings.NATS_PASSWORD,
-    )
+    # Connect to NATS in the background so the HTTP API starts immediately
+    async def _connect_and_subscribe():
+        global _nats_client
+        nats_client = NatsClient(
+            url=settings.NATS_URL,
+            user=settings.NATS_USER,
+            password=settings.NATS_PASSWORD,
+        )
 
-    connected = await connect_nats_with_retry(nats_client)
-    if connected:
-        _nats_client = nats_client
+        connected = await connect_nats_with_retry(nats_client)
+        if connected:
+            _nats_client = nats_client
 
-        # Create workflow handler using the same Analyzer instance from routes
-        from src.api.routes.analysis import _analyzer
+            from src.api.routes.analysis import _analyzer
 
-        handler = WorkflowHandler(nats_client=nats_client, analyzer=_analyzer)
+            handler = WorkflowHandler(nats_client=nats_client, analyzer=_analyzer)
 
-        # Start subscription as a background task so it doesn't block startup
-        async def _run_subscription():
             try:
                 await nats_client.subscribe(
                     stream=settings.NATS_STREAM_NAME,
@@ -75,11 +74,10 @@ async def lifespan(app: FastAPI):
                 )
             except Exception as e:
                 logger.error("NATS subscription failed: %s", e)
+        else:
+            logger.warning("Starting without NATS — HTTP API is still available")
 
-        nats_task = asyncio.create_task(_run_subscription())
-        logger.info("NATS workflow subscription started")
-    else:
-        logger.warning("Starting without NATS — HTTP API is still available")
+    nats_task = asyncio.create_task(_connect_and_subscribe())
 
     yield
 
