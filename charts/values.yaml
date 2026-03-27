@@ -2,7 +2,7 @@ name: ai-analysis-service
 replicaCount: 1
 image:
   repository: ghcr.io/visiobook-esp/ai-analysis-service-dev
-  tag: "sha-3100000"
+  tag: "sha-fd2ca04"
   pullPolicy: IfNotPresent
 
 strategy:
