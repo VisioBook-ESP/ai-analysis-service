@@ -2,8 +2,9 @@ import asyncio
 import time
 import logging
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from src.api.dependencies import get_current_user
 from src.services.analysis import Analyzer, AnalysisOptions as ServiceOptions
 from src.services.job_store import job_store
 from src.api.schemas.analysis import (
@@ -114,14 +115,17 @@ async def _run_analysis(job_id: str, request: AnalyzeRequest) -> None:
     response_model=JobSubmittedResponse,
     status_code=status.HTTP_202_ACCEPTED,
 )
-async def analyze(request: AnalyzeRequest) -> JobSubmittedResponse:
+async def analyze(
+    request: AnalyzeRequest,
+    user_id: str = Depends(get_current_user),
+) -> JobSubmittedResponse:
     if len(request.text) > 500_000:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="Text too large. Maximum 500,000 characters.",
         )
 
-    job = await job_store.create()
+    job = await job_store.create(user_id)
     asyncio.create_task(_run_analysis(job.job_id, request))
     return JobSubmittedResponse(job_id=job.job_id, status=job.status)
 
@@ -130,9 +134,13 @@ async def analyze(request: AnalyzeRequest) -> JobSubmittedResponse:
     "/jobs/{job_id}",
     response_model=JobStatusResponse,
 )
-async def get_job(job_id: str) -> JobStatusResponse:
+async def get_job(
+    job_id: str,
+    user_id: str = Depends(get_current_user),
+) -> JobStatusResponse:
     job = job_store.get(job_id)
-    if job is None:
+    # Return 404 (not 403) for non-owned resources to prevent enumeration
+    if job is None or job.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
         )
@@ -153,7 +161,10 @@ async def get_job(job_id: str) -> JobStatusResponse:
     response_model=BatchAnalyzeResponse,
     status_code=status.HTTP_200_OK,
 )
-async def analyze_batch(request: BatchAnalyzeRequest) -> BatchAnalyzeResponse:
+async def analyze_batch(
+    request: BatchAnalyzeRequest,
+    user_id: str = Depends(get_current_user),
+) -> BatchAnalyzeResponse:
     if len(request.texts) > 50:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
