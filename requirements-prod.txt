@@ -26,6 +26,7 @@ nats-py>=2.9.0
 # Database (PostgreSQL via CNPG)
 sqlalchemy[asyncio]==2.0.41
 asyncpg==0.31.0
+psycopg2-binary==2.9.10
 alembic==1.15.2
 
 
