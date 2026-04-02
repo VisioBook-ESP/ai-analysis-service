@@ -17,3 +17,8 @@ spacy>=3.8.0
 # System monitoring
 psutil>=7.1.0
 
+# Database
+sqlalchemy[asyncio]>=2.0.41
+asyncpg>=0.31.0
+alembic>=1.15.0
+

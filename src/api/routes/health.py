@@ -4,6 +4,7 @@ from typing import Dict
 from datetime import datetime
 import psutil
 
+from src.clients.database_client import DatabaseClient
 from src.config.settings import Settings, get_settings
 from src.services.analysis.llm_client import LLMClient
 
@@ -33,9 +34,7 @@ class MetricsResponse(BaseModel):
 
 @router.get("/health", response_model=HealthResponse, status_code=status.HTTP_200_OK)
 def health_check(settings: Settings = Depends(get_settings)):
-    return HealthResponse(
-        status="healthy", service=settings.app_name, timestamp=datetime.now()
-    )
+    return HealthResponse(status="healthy", service=settings.app_name, timestamp=datetime.now())
 
 
 @router.get("/ready", response_model=ReadinessResponse)
@@ -44,7 +43,14 @@ async def readiness_check(settings: Settings = Depends(get_settings)):
     vllm_ok = await llm_client.health_check()
     await llm_client.close()
 
-    checks = {"api": True, "vllm": vllm_ok}
+    db_client = DatabaseClient()
+    db_ok = False
+    if settings.DATABASE_URL:
+        db_ok = await db_client.health_check()
+    else:
+        db_ok = True  # DB not configured — skip check
+
+    checks = {"api": True, "vllm": vllm_ok, "database": db_ok}
     all_ready = all(checks.values())
 
     return ReadinessResponse(

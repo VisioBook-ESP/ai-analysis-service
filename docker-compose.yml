@@ -1,11 +1,35 @@
 name: ai-analysis
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: analysis_user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: analysis
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analysis_user -d analysis"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   api:
     build:
       context: .
       dockerfile: Dockerfile
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql://analysis_user:password@postgres:5432/analysis
     command: ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8083"]
     ports:
       - "${APP_PORT:-8083}:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  pgdata:
