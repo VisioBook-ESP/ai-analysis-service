@@ -24,7 +24,9 @@ class AnalysisResult(Base):
     )
     project_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     version_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    execution_id: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    execution_id: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True, index=True
+    )
     user_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="completed")
 
@@ -53,7 +55,9 @@ class AnalysisResult(Base):
         server_default=func.now(),
     )
 
-    __table_args__ = (Index("ix_analysis_results_project_version", "project_id", "version_id"),)
+    __table_args__ = (
+        Index("ix_analysis_results_project_version", "project_id", "version_id"),
+    )
 
     def __repr__(self) -> str:
         return (

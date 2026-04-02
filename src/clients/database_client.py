@@ -65,10 +65,14 @@ class DatabaseClient:
                     )
                 )
                 await session.execute(stmt)
-            logger.info("Saved analysis for execution %s (status=%s)", execution_id, status)
+            logger.info(
+                "Saved analysis for execution %s (status=%s)", execution_id, status
+            )
             return True
         except Exception as e:
-            logger.error("Failed to save analysis for execution %s: %s", execution_id, e)
+            logger.error(
+                "Failed to save analysis for execution %s: %s", execution_id, e
+            )
             return False
 
     async def get_analysis(self, execution_id: str) -> AnalysisResult | None:
@@ -76,14 +80,18 @@ class DatabaseClient:
         try:
             async with get_session() as session:
                 result = await session.execute(
-                    select(AnalysisResult).where(AnalysisResult.execution_id == execution_id)
+                    select(AnalysisResult).where(
+                        AnalysisResult.execution_id == execution_id
+                    )
                 )
                 return result.scalar_one_or_none()
         except Exception as e:
             logger.error("Failed to get analysis %s: %s", execution_id, e)
             return None
 
-    async def get_analyses_by_project(self, project_id: str, user_id: str) -> list[AnalysisResult]:
+    async def get_analyses_by_project(
+        self, project_id: str, user_id: str
+    ) -> list[AnalysisResult]:
         """Retrieve all analyses for a project, scoped to user."""
         try:
             async with get_session() as session:

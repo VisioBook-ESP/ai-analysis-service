@@ -21,7 +21,10 @@ def upgrade() -> None:
     op.create_table(
         "analysis_results",
         sa.Column(
-            "id", UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")
+            "id",
+            UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column("project_id", sa.String(255), nullable=False),
         sa.Column("version_id", sa.String(255), nullable=False),
@@ -39,21 +42,36 @@ def upgrade() -> None:
         sa.Column("error", sa.Text, nullable=True),
         sa.Column("correlation_id", sa.String(255), nullable=True),
         sa.Column(
-            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
         ),
         sa.Column(
-            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.func.now(),
+            nullable=False,
         ),
     )
 
-    op.create_index("ix_analysis_results_project_id", "analysis_results", ["project_id"])
-    op.create_index("ix_analysis_results_version_id", "analysis_results", ["version_id"])
     op.create_index(
-        "ix_analysis_results_execution_id", "analysis_results", ["execution_id"], unique=True
+        "ix_analysis_results_project_id", "analysis_results", ["project_id"]
+    )
+    op.create_index(
+        "ix_analysis_results_version_id", "analysis_results", ["version_id"]
+    )
+    op.create_index(
+        "ix_analysis_results_execution_id",
+        "analysis_results",
+        ["execution_id"],
+        unique=True,
     )
     op.create_index("ix_analysis_results_user_id", "analysis_results", ["user_id"])
     op.create_index(
-        "ix_analysis_results_project_version", "analysis_results", ["project_id", "version_id"]
+        "ix_analysis_results_project_version",
+        "analysis_results",
+        ["project_id", "version_id"],
     )
 
 

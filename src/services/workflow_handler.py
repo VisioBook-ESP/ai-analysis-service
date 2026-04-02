@@ -52,7 +52,9 @@ class WorkflowHandler:
             return
 
         # Publish progress: starting (0%)
-        await self._publish_progress(project_id, version_id, execution_id, correlation_id, 0)
+        await self._publish_progress(
+            project_id, version_id, execution_id, correlation_id, 0
+        )
 
         start_time = time.monotonic()
 
@@ -61,7 +63,9 @@ class WorkflowHandler:
             language = config.get("language", "auto")
 
             # Publish progress: preprocessing (10%)
-            await self._publish_progress(project_id, version_id, execution_id, correlation_id, 10)
+            await self._publish_progress(
+                project_id, version_id, execution_id, correlation_id, 10
+            )
 
             # Run the analysis using existing Analyzer
             result = await self.analyzer.analyze(content_text, language=language)
@@ -69,7 +73,9 @@ class WorkflowHandler:
             elapsed_ms = (time.monotonic() - start_time) * 1000
 
             # Publish progress: parsing (80%)
-            await self._publish_progress(project_id, version_id, execution_id, correlation_id, 80)
+            await self._publish_progress(
+                project_id, version_id, execution_id, correlation_id, 80
+            )
 
             # Map scenes to core-project-service format
             scenes = self._map_scenes(result.get("scenes", []))
@@ -110,7 +116,9 @@ class WorkflowHandler:
             )
 
             # Publish progress: done (100%)
-            await self._publish_progress(project_id, version_id, execution_id, correlation_id, 100)
+            await self._publish_progress(
+                project_id, version_id, execution_id, correlation_id, 100
+            )
 
             logger.info(
                 "Analysis completed: projectId=%s, scenes=%d, characters=%d, elapsed=%.0fms",
@@ -156,7 +164,9 @@ class WorkflowHandler:
             scenes.append(
                 {
                     "order": (
-                        scene.get("scene_id", i) if isinstance(scene.get("scene_id"), int) else i
+                        scene.get("scene_id", i)
+                        if isinstance(scene.get("scene_id"), int)
+                        else i
                     ),
                     "text": text,
                     "description": scene.get("title", ""),

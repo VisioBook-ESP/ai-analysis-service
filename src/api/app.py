@@ -28,7 +28,9 @@ async def connect_nats_with_retry(
             await nats_client.connect()
             return True
         except Exception as e:
-            logger.warning("NATS connection attempt %d/%d failed: %s", attempt, max_retries, e)
+            logger.warning(
+                "NATS connection attempt %d/%d failed: %s", attempt, max_retries, e
+            )
             if attempt < max_retries:
                 await asyncio.sleep(delay * attempt)
     logger.error("Could not connect to NATS after %d attempts", max_retries)

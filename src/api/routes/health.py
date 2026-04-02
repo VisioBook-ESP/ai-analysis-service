@@ -34,7 +34,9 @@ class MetricsResponse(BaseModel):
 
 @router.get("/health", response_model=HealthResponse, status_code=status.HTTP_200_OK)
 def health_check(settings: Settings = Depends(get_settings)):
-    return HealthResponse(status="healthy", service=settings.app_name, timestamp=datetime.now())
+    return HealthResponse(
+        status="healthy", service=settings.app_name, timestamp=datetime.now()
+    )
 
 
 @router.get("/ready", response_model=ReadinessResponse)
