@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     max_text_length: int = 500_000
     max_batch_size: int = 50
 
+    # Database (PostgreSQL via CNPG postgres-io cluster)
+    DATABASE_URL: str = ""
+    DATABASE_POOL_SIZE: int = 5
+    DATABASE_MAX_OVERFLOW: int = 10
+
     # NATS JetStream
     NATS_URL: str = "nats://nats.visiobook-namespace.svc.cluster.local:4222"
     NATS_USER: str = ""

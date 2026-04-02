@@ -1,4 +1,7 @@
 import logging
+import time
+
+from src.clients.database_client import DatabaseClient
 from src.services.analysis.analyzer import Analyzer
 from src.services.nats_client import NatsClient
 
@@ -12,9 +15,15 @@ SUBJECT_PROGRESS = "visiobook.ai.progress"
 
 
 class WorkflowHandler:
-    def __init__(self, nats_client: NatsClient, analyzer: Analyzer):
+    def __init__(
+        self,
+        nats_client: NatsClient,
+        analyzer: Analyzer,
+        db_client: DatabaseClient | None = None,
+    ):
         self.nats = nats_client
         self.analyzer = analyzer
+        self.db = db_client or DatabaseClient()
 
     async def handle_workflow_started(self, data: dict):
         """Handle visiobook.project.workflow.started event."""
@@ -33,13 +42,12 @@ class WorkflowHandler:
         )
 
         if not content_text:
+            error_msg = "No content text provided"
+            await self._persist_failure(
+                project_id, version_id, execution_id, user_id, correlation_id, error_msg
+            )
             await self._publish_failed(
-                project_id,
-                version_id,
-                execution_id,
-                user_id,
-                correlation_id,
-                "No content text provided",
+                project_id, version_id, execution_id, user_id, correlation_id, error_msg
             )
             return
 
@@ -47,6 +55,8 @@ class WorkflowHandler:
         await self._publish_progress(
             project_id, version_id, execution_id, correlation_id, 0
         )
+
+        start_time = time.monotonic()
 
         try:
             # Determine language from config
@@ -60,6 +70,8 @@ class WorkflowHandler:
             # Run the analysis using existing Analyzer
             result = await self.analyzer.analyze(content_text, language=language)
 
+            elapsed_ms = (time.monotonic() - start_time) * 1000
+
             # Publish progress: parsing (80%)
             await self._publish_progress(
                 project_id, version_id, execution_id, correlation_id, 80
@@ -70,6 +82,24 @@ class WorkflowHandler:
 
             # Map characters to core-project-service format
             characters = self._map_characters(result.get("characters", []))
+
+            # Persist full analysis result to database
+            await self.db.save_analysis(
+                project_id=project_id,
+                version_id=version_id,
+                execution_id=execution_id,
+                user_id=user_id,
+                status="completed",
+                scenes=scenes,
+                characters=characters,
+                narrative=result.get("narrative"),
+                sentiment=result.get("sentiment"),
+                summary=result.get("summary"),
+                text_stats=result.get("text_stats"),
+                language=result.get("language", language),
+                processing_time_ms=elapsed_ms,
+                correlation_id=correlation_id,
+            )
 
             # Publish analysis completed
             await self.nats.publish(
@@ -91,26 +121,32 @@ class WorkflowHandler:
             )
 
             logger.info(
-                "Analysis completed: projectId=%s, scenes=%d, characters=%d",
+                "Analysis completed: projectId=%s, scenes=%d, characters=%d, elapsed=%.0fms",
                 project_id,
                 len(scenes),
                 len(characters),
+                elapsed_ms,
             )
 
         except Exception as e:
+            elapsed_ms = (time.monotonic() - start_time) * 1000
             logger.error(
                 "Analysis failed for projectId=%s: %s",
                 project_id,
                 str(e),
                 exc_info=True,
             )
-            await self._publish_failed(
+            await self._persist_failure(
                 project_id,
                 version_id,
                 execution_id,
                 user_id,
                 correlation_id,
                 str(e),
+                elapsed_ms,
+            )
+            await self._publish_failed(
+                project_id, version_id, execution_id, user_id, correlation_id, str(e)
             )
 
     def _map_scenes(self, raw_scenes: list) -> list:
@@ -221,6 +257,30 @@ class WorkflowHandler:
                 "correlationId": correlation_id,
             },
         )
+
+    async def _persist_failure(
+        self,
+        project_id: str,
+        version_id: str,
+        execution_id: str,
+        user_id: str,
+        correlation_id: str,
+        error: str,
+        elapsed_ms: float = 0,
+    ):
+        try:
+            await self.db.save_analysis(
+                project_id=project_id,
+                version_id=version_id,
+                execution_id=execution_id,
+                user_id=user_id,
+                status="failed",
+                error=error,
+                processing_time_ms=elapsed_ms,
+                correlation_id=correlation_id,
+            )
+        except Exception as e:
+            logger.error("Failed to persist failure record: %s", e)
 
     async def _publish_failed(
         self,

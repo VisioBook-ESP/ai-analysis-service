@@ -18,6 +18,8 @@ RUN pip install --upgrade pip && \
     python -m spacy download en_core_web_lg
 
 COPY src ./src
+COPY alembic.ini ./alembic.ini
+COPY alembic ./alembic
 
 RUN mkdir -p data && chmod -R 755 /app
 
@@ -30,4 +32,4 @@ EXPOSE 8083
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8083/health || exit 1
 
-CMD ["uvicorn", "src.api.app:app", "--host", "0.0.0.0", "--port", "8083", "--workers", "4"]
+CMD ["sh", "-c", "alembic upgrade head 2>/dev/null || true && uvicorn src.api.app:app --host 0.0.0.0 --port 8083 --workers 4"]

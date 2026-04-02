@@ -3,11 +3,13 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
-from src.api.routes.health import router as health_router
 from src.api.routes.analysis import router as analysis_router
+from src.api.routes.health import router as health_router
+from src.api.routes.results import router as results_router
 from src.config.settings import get_settings
 from src.services.job_store import job_store
 from src.services.nats_client import NatsClient
+from src.database.connection import close_engine
 from src.services.workflow_handler import WorkflowHandler, SUBJECT_WORKFLOW_STARTED
 
 logger = logging.getLogger(__name__)
@@ -89,6 +91,8 @@ async def lifespan(app: FastAPI):
         await _nats_client.close()
         _nats_client = None
 
+    await close_engine()
+
     from src.api.routes.analysis import _analyzer
 
     await _analyzer.close()
@@ -126,3 +130,4 @@ def root():
 
 app.include_router(health_router, tags=["health"])
 app.include_router(analysis_router, prefix="/api/v1", tags=["analysis"])
+app.include_router(results_router, prefix="/api/v1/results", tags=["results"])
