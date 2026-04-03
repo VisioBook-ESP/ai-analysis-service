@@ -7,7 +7,12 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from src.database.connection import get_session
-from src.database.models import AnalysisResult
+from src.database.models import (
+    AnalysisResult,
+    CharacterPrompt,
+    LocationPrompt,
+    ScenePrompt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +78,76 @@ class DatabaseClient:
             logger.error(
                 "Failed to save analysis for execution %s: %s", execution_id, e
             )
+            return False
+
+    async def save_prompts(
+        self,
+        *,
+        execution_id: str,
+        image_prompts: dict,
+    ) -> bool:
+        """Persist generated prompt data to dedicated tables."""
+        try:
+            # Lookup the analysis_results.id by execution_id
+            async with get_session() as session:
+                result = await session.execute(
+                    select(AnalysisResult.id).where(
+                        AnalysisResult.execution_id == execution_id
+                    )
+                )
+                analysis_id = result.scalar_one_or_none()
+                if not analysis_id:
+                    logger.warning(
+                        "Cannot save prompts: analysis not found for execution %s",
+                        execution_id,
+                    )
+                    return False
+
+            async with get_session() as session:
+                # Scene prompts
+                for sp in image_prompts.get("scene_prompts", []):
+                    session.add(
+                        ScenePrompt(
+                            analysis_id=analysis_id,
+                            scene_order=sp.get("scene_order", 0),
+                            image_prompt=sp.get("image_prompt", ""),
+                            negative_prompt=sp.get("negative_prompt", ""),
+                            characters_present=sp.get("characters_present"),
+                            location_id=sp.get("location_id"),
+                        )
+                    )
+
+                # Character prompts
+                for cp in image_prompts.get("character_prompts", []):
+                    session.add(
+                        CharacterPrompt(
+                            analysis_id=analysis_id,
+                            name=cp.get("name", ""),
+                            physical_description=cp.get("physical_description", ""),
+                            portrait_prompt=cp.get("portrait_prompt", ""),
+                            portrait_negative_prompt=cp.get(
+                                "portrait_negative_prompt", ""
+                            ),
+                        )
+                    )
+
+                # Location prompts
+                for lp in image_prompts.get("location_prompts", []):
+                    session.add(
+                        LocationPrompt(
+                            analysis_id=analysis_id,
+                            location_id=lp.get("location_id", ""),
+                            name=lp.get("name", ""),
+                            description_prompt=lp.get("description_prompt", ""),
+                            negative_prompt=lp.get("negative_prompt", ""),
+                            source_scene_orders=lp.get("source_scene_orders"),
+                        )
+                    )
+
+            logger.info("Saved prompts for execution %s", execution_id)
+            return True
+        except Exception as e:
+            logger.error("Failed to save prompts for execution %s: %s", execution_id, e)
             return False
 
     async def get_analysis(self, execution_id: str) -> AnalysisResult | None:

@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     DATABASE_POOL_SIZE: int = 5
     DATABASE_MAX_OVERFLOW: int = 10
 
+    # Prompt generation (second LLM call for Flux/SDXL prompts)
+    prompt_gen_enabled: bool = True
+    prompt_gen_temperature: float = 0.35
+    prompt_gen_max_tokens: int = 2048
+
     # NATS JetStream
     NATS_URL: str = "nats://nats.visiobook-namespace.svc.cluster.local:4222"
     NATS_USER: str = ""

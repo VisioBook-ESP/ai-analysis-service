@@ -2,10 +2,12 @@ import logging
 import time
 from typing import Any, Awaitable, Callable, Dict, Optional
 
+from src.config.settings import get_settings
 from src.services.preprocessing import TextPreprocessor
 
 from .llm_client import LLMClient
 from .prompts import SYSTEM_PROMPT, build_analysis_prompt
+from .prompt_generator import PromptGenerator
 from .response_parser import ResponseParser
 
 logger = logging.getLogger(__name__)
@@ -46,6 +48,7 @@ class Analyzer:
         self.preprocessor = TextPreprocessor()
         self.llm_client = LLMClient()
         self.parser = ResponseParser()
+        self.prompt_generator = PromptGenerator(self.llm_client)
 
     async def analyze(
         self,
@@ -53,10 +56,13 @@ class Analyzer:
         language: str = "auto",
         options: Optional[AnalysisOptions] = None,
         on_step: Optional[StepCallback] = None,
+        generate_prompts: bool = False,
+        visual_style: str = "realistic",
     ) -> Dict[str, Any]:
         if options is None:
             options = AnalysisOptions()
 
+        settings = get_settings()
         start_time = time.time()
 
         # Step 1: Preprocessing
@@ -82,7 +88,7 @@ class Analyzer:
             "quality_assessment": preprocessed["quality"].get("assessment", "unknown"),
         }
 
-        # Step 3: Call LLM
+        # Step 3: Call LLM for analysis
         if on_step:
             await on_step("llm_call")
         options_dict = options.to_dict()
@@ -111,13 +117,37 @@ class Analyzer:
                 parsed["summary"].get("summary", "")
             )
 
-        # Step 6: Assemble result
-        return {
+        # Step 6: Generate image prompts (second LLM call)
+        image_prompts = None
+        if generate_prompts and settings.prompt_gen_enabled:
+            if on_step:
+                await on_step("prompt_generation")
+            try:
+                image_prompts = await self.prompt_generator.generate(
+                    analysis_result=parsed,
+                    visual_style=visual_style,
+                    language=detected_language,
+                )
+                logger.info(
+                    "Prompt generation completed: %d scenes, %d characters, %d locations",
+                    len(image_prompts.get("scene_prompts", [])),
+                    len(image_prompts.get("character_prompts", [])),
+                    len(image_prompts.get("location_prompts", [])),
+                )
+            except Exception as e:
+                logger.error(f"Prompt generation failed (non-fatal): {e}")
+                # Graceful degradation: analysis still completes
+
+        # Step 7: Assemble result
+        result = {
             "language": detected_language,
             "text_stats": text_stats,
             **parsed,
             "processing_time_ms": round((time.time() - start_time) * 1000, 2),
         }
+        if image_prompts is not None:
+            result["image_prompts"] = image_prompts
+        return result
 
     async def close(self):
         await self.llm_client.close()
