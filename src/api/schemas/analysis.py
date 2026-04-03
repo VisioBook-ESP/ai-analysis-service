@@ -134,6 +134,38 @@ class SummaryResult(BaseModel):
     summary_length: int
 
 
+# ---- Response: Image Prompts ----
+
+
+class ScenePromptResponse(BaseModel):
+    scene_order: int
+    image_prompt: str
+    negative_prompt: str = ""
+    characters_present: List[str] = []
+    location_id: Optional[str] = None
+
+
+class CharacterPromptResponse(BaseModel):
+    name: str
+    physical_description: str
+    portrait_prompt: str
+    portrait_negative_prompt: str = ""
+
+
+class LocationPromptResponse(BaseModel):
+    location_id: str
+    name: str
+    description_prompt: str
+    negative_prompt: str = ""
+    source_scene_orders: List[int] = []
+
+
+class ImagePromptsResponse(BaseModel):
+    scene_prompts: List[ScenePromptResponse] = []
+    character_prompts: List[CharacterPromptResponse] = []
+    location_prompts: List[LocationPromptResponse] = []
+
+
 # ---- Top-level Response ----
 
 
@@ -145,6 +177,7 @@ class AnalyzeResponse(BaseModel):
     narrative: Optional[NarrativeAnalysis] = None
     sentiment: Optional[SentimentAnalysis] = None
     summary: Optional[SummaryResult] = None
+    image_prompts: Optional[ImagePromptsResponse] = None
     processing_time_ms: float
 
 

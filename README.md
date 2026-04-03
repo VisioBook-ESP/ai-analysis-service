@@ -6,9 +6,11 @@ Service d'analyse sémantique de textes via LLM. Extrait personnages, scènes, n
 
 ## Stack
 
-- **API** : FastAPI 0.115 — Python 3.12
+- **API** : FastAPI 0.121 — Python 3.12
 - **LLM** : vLLM (OpenAI-compatible) — Mistral Ministral-3B-Instruct
 - **Preprocessing** : spaCy, langdetect
+- **Database** : PostgreSQL (postgres-io / analysis) — SQLAlchemy + asyncpg + Alembic
+- **Messaging** : NATS JetStream (workflow integration)
 - **Déploiement** : Docker, Kubernetes (Helm + Istio)
 
 ---
@@ -16,10 +18,15 @@ Service d'analyse sémantique de textes via LLM. Extrait personnages, scènes, n
 ## Architecture
 
 ```
-Client
+Client / NATS JetStream
   │
   ▼
 FastAPI :8083
+  │
+  ├── HTTP API (/analyze, /results, /jobs)
+  │
+  ├── NATS Subscriber (workflow.started)
+  │     └── WorkflowHandler → analyse + persist + publish
   │
   ├── Preprocessing
   │     ├── Détection de langue (langdetect)
@@ -30,8 +37,11 @@ FastAPI :8083
   ├── LLM Client (httpx async)
   │     └── POST /v1/chat/completions → vLLM :8000
   │
-  └── Response Parser
-        └── Validation + normalisation JSON
+  ├── Response Parser
+  │     └── Validation + normalisation JSON
+  │
+  └── Database (PostgreSQL postgres-io/analysis)
+        └── analysis_results (SQLAlchemy + asyncpg)
 ```
 
 ---
@@ -43,7 +53,7 @@ FastAPI :8083
 | Méthode | Route | Description |
 |---------|-------|-------------|
 | GET | `/health` | Liveness — retourne `healthy` |
-| GET | `/ready` | Readiness — vérifie la connexion vLLM |
+| GET | `/ready` | Readiness — vérifie vLLM + DB |
 | GET | `/metrics` | CPU, RAM, disque |
 
 ### Analyse (async)
@@ -53,6 +63,22 @@ FastAPI :8083
 | POST | `/api/v1/analyze` | Soumet une analyse, retourne un `job_id` |
 | GET | `/api/v1/jobs/{job_id}` | Statut et résultat du job |
 | POST | `/api/v1/analyze/batch` | Analyse synchrone de plusieurs textes (max 50) |
+
+### Résultats persistés (via workflow NATS)
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| GET | `/api/v1/results/{execution_id}` | Résultat d'analyse persisté |
+| GET | `/api/v1/results/project/{project_id}` | Liste des analyses d'un projet |
+
+### NATS JetStream (workflow)
+
+| Sujet | Direction | Description |
+|-------|-----------|-------------|
+| `visiobook.project.workflow.started` | Subscribe | Déclenche l'analyse (reçu de core-project-service) |
+| `visiobook.ai.analysis.completed` | Publish | Résultat (scenes + characters) |
+| `visiobook.ai.analysis.failed` | Publish | Erreur |
+| `visiobook.ai.progress` | Publish | Progression (0%, 10%, 80%, 100%) |
 
 ---
 
@@ -139,6 +165,11 @@ Variables d'environnement (fichier `.env`) :
 | `VLLM_MAX_TOKENS` | `4096` | Tokens max en sortie |
 | `VLLM_TEMPERATURE` | `0.1` | Température (déterminisme) |
 | `APP_PORT` | `8083` | Port du service |
+| `DATABASE_URL` | — | Connection string PostgreSQL |
+| `DATABASE_POOL_SIZE` | `5` | Taille pool connexions DB |
+| `DATABASE_MAX_OVERFLOW` | `10` | Connexions supplémentaires max |
+| `NATS_URL` | `nats://nats:4222` | URL NATS JetStream |
+| `NATS_STREAM_NAME` | `VISIOBOOK_PROJECT` | Nom du stream |
 
 ---
 
