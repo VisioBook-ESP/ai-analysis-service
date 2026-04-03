@@ -65,7 +65,9 @@ class NatsClient:
                 )
                 break
             except Exception as e:
-                if "already bound" in str(e) and attempt < max_retries:
+                if "already bound" not in str(e):
+                    raise
+                if attempt <= 3:
                     logger.warning(
                         "Consumer %s already bound (attempt %d/%d), "
                         "waiting for old pod to drain...",
@@ -74,8 +76,32 @@ class NatsClient:
                         max_retries,
                     )
                     await asyncio.sleep(retry_delay)
+                elif attempt == 4:
+                    logger.warning(
+                        "Consumer %s still bound after %d retries, "
+                        "deleting stale consumer and recreating...",
+                        durable,
+                        attempt - 1,
+                    )
+                    try:
+                        await self.js.delete_consumer(stream, durable)
+                        logger.info("Deleted stale consumer %s", durable)
+                    except Exception as del_err:
+                        logger.error(
+                            "Failed to delete consumer %s: %s", durable, del_err
+                        )
+                    await asyncio.sleep(1)
                 else:
-                    raise
+                    if attempt < max_retries:
+                        logger.warning(
+                            "Consumer %s still bound after delete (attempt %d/%d), retrying...",
+                            durable,
+                            attempt,
+                            max_retries,
+                        )
+                        await asyncio.sleep(retry_delay)
+                    else:
+                        raise
 
         if sub is None:
             raise RuntimeError(
