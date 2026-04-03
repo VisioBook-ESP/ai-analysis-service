@@ -58,6 +58,8 @@ class LLMClient:
         }
 
         response = await client.post("/v1/chat/completions", json=payload)
+        if response.status_code >= 400:
+            logger.error("vLLM error %d: %s", response.status_code, response.text)
         response.raise_for_status()
 
         data = response.json()
