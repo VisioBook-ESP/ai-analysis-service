@@ -1,3 +1,5 @@
+import asyncio
+
 import nats
 from nats.js.api import ConsumerConfig, AckPolicy
 import json
@@ -45,17 +47,41 @@ class NatsClient:
         subject: str,
         durable: str,
         callback: Callable[[dict], Awaitable[None]],
+        max_retries: int = 10,
+        retry_delay: float = 3.0,
     ):
         if not self.js:
             logger.warning("NATS not connected, cannot subscribe to %s", subject)
             return
 
-        sub = await self.js.subscribe(
-            subject,
-            durable=durable,
-            stream=stream,
-            config=ConsumerConfig(ack_policy=AckPolicy.EXPLICIT),
-        )
+        sub = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                sub = await self.js.subscribe(
+                    subject,
+                    durable=durable,
+                    stream=stream,
+                    config=ConsumerConfig(ack_policy=AckPolicy.EXPLICIT),
+                )
+                break
+            except Exception as e:
+                if "already bound" in str(e) and attempt < max_retries:
+                    logger.warning(
+                        "Consumer %s already bound (attempt %d/%d), "
+                        "waiting for old pod to drain...",
+                        durable,
+                        attempt,
+                        max_retries,
+                    )
+                    await asyncio.sleep(retry_delay)
+                else:
+                    raise
+
+        if sub is None:
+            raise RuntimeError(
+                f"Failed to subscribe to {subject} after {max_retries} attempts"
+            )
+
         self._subscriptions.append(sub)
         logger.info("Subscribed to %s (durable=%s)", subject, durable)
 
