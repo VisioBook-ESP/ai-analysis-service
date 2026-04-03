@@ -12,6 +12,7 @@ from src.services.nats_client import NatsClient
 from src.database.connection import close_engine
 from src.services.workflow_handler import WorkflowHandler, SUBJECT_WORKFLOW_STARTED
 
+logging.basicConfig(level=logging.INFO, format="%(levelname)s  [%(name)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
