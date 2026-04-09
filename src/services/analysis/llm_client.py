@@ -63,13 +63,34 @@ class LLMClient:
         response.raise_for_status()
 
         data = response.json()
-        content = data["choices"][0]["message"]["content"]
+        choice = data["choices"][0]
+        content = choice["message"]["content"]
+        finish_reason = choice.get("finish_reason")
+        usage = data.get("usage") or {}
+
+        logger.info(
+            "vLLM completion: finish_reason=%s, prompt_tokens=%s, "
+            "completion_tokens=%s, total_tokens=%s",
+            finish_reason,
+            usage.get("prompt_tokens"),
+            usage.get("completion_tokens"),
+            usage.get("total_tokens"),
+        )
 
         try:
             return json.loads(content)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse LLM JSON response: {e}")
             logger.debug(f"Raw response: {content[:500]}")
+            if finish_reason == "length":
+                requested_max = payload["max_tokens"]
+                completion_tokens = usage.get("completion_tokens")
+                raise RuntimeError(
+                    f"vLLM hit max_tokens={requested_max} "
+                    f"(completion_tokens={completion_tokens}) — output was "
+                    "truncated before the JSON structure closed. Increase "
+                    "VLLM_MAX_TOKENS or shorten the input."
+                )
             return self._extract_json(content)
 
     @staticmethod

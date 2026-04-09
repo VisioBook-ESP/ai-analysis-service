@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     vllm_base_url: str = "http://localhost:8000"
     vllm_model_name: str = "mistralai/Ministral-3-3B-Instruct-2512-BF16"
     vllm_api_key: str = "EMPTY"
-    vllm_timeout: float = 120.0
-    vllm_max_tokens: int = 4096
+    vllm_timeout: float = 600.0
+    vllm_max_tokens: int = 16384
     vllm_temperature: float = 0.1
     vllm_top_p: float = 0.95
 
