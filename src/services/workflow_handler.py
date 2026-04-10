@@ -62,10 +62,17 @@ class WorkflowHandler:
             language = config.get("language", "auto")
             visual_style = config.get("style", "realistic")
 
-            # Publish progress: preprocessing (5%)
-            await self._publish_progress(
-                project_id, version_id, execution_id, correlation_id, 5
-            )
+            # Build progress callback for the analyzer
+            async def on_step(step: str):
+                progress = self._step_to_progress(step)
+                if progress is not None:
+                    await self._publish_progress(
+                        project_id,
+                        version_id,
+                        execution_id,
+                        correlation_id,
+                        progress,
+                    )
 
             # Run analysis + prompt generation (two-phase LLM pipeline)
             result = await self.analyzer.analyze(
@@ -73,13 +80,14 @@ class WorkflowHandler:
                 language=language,
                 generate_prompts=True,
                 visual_style=visual_style,
+                on_step=on_step,
             )
 
             elapsed_ms = (time.monotonic() - start_time) * 1000
 
-            # Publish progress: persisting (80%)
+            # Publish progress: persisting (85%)
             await self._publish_progress(
-                project_id, version_id, execution_id, correlation_id, 80
+                project_id, version_id, execution_id, correlation_id, 85
             )
 
             # Extract image prompts (may be None if prompt gen failed/disabled)
@@ -174,11 +182,14 @@ class WorkflowHandler:
 
     def _map_scenes(self, raw_scenes: list, image_prompts: dict | None = None) -> list:
         """Map ai-analysis-service scene format to core-project-service format."""
-        # Build lookup from prompt gen results
+        # Build lookups from prompt gen results
         prompt_lookup: dict[int, dict] = {}
+        audio_prompt_lookup: dict[int, dict] = {}
         if image_prompts:
             for sp in image_prompts.get("scene_prompts", []):
                 prompt_lookup[sp.get("scene_order", -1)] = sp
+            for ap in image_prompts.get("audio_prompts", []):
+                audio_prompt_lookup[ap.get("scene_order", -1)] = ap
 
         scenes = []
         for i, scene in enumerate(raw_scenes):
@@ -200,6 +211,20 @@ class WorkflowHandler:
                 characters_present = scene.get("characters_present", [])
                 location_id = None
 
+            # Build audio prompt string from audio_prompts lookup
+            audio_data = audio_prompt_lookup.get(i)
+            audio_prompt = None
+            if audio_data:
+                parts = []
+                if audio_data.get("ambient_description"):
+                    parts.append(audio_data["ambient_description"])
+                sfx = audio_data.get("sfx", [])
+                if sfx:
+                    parts.append(f"SFX: {', '.join(sfx)}")
+                if audio_data.get("music_mood"):
+                    parts.append(f"Music: {audio_data['music_mood']}")
+                audio_prompt = ". ".join(parts) if parts else None
+
             mapped = {
                 "order": (
                     scene.get("scene_id", i)
@@ -216,11 +241,28 @@ class WorkflowHandler:
                     else "neutral"
                 ),
                 "charactersPresent": characters_present,
+                "sceneType": scene.get("scene_type"),
+                "narrationText": scene.get("narration_text") or None,
             }
             if negative_prompt:
                 mapped["negativePrompt"] = negative_prompt
             if location_id:
                 mapped["locationId"] = location_id
+            if audio_prompt:
+                mapped["audioPrompt"] = audio_prompt
+
+            # Include dialogues from the scene (exact quotes for TTS)
+            scene_dialogues = scene.get("dialogues", [])
+            if scene_dialogues:
+                mapped["dialogues"] = [
+                    {
+                        "speaker": d.get("speaker", ""),
+                        "line": d.get("line", ""),
+                        "delivery": d.get("delivery", "neutral"),
+                    }
+                    for d in scene_dialogues
+                    if d.get("line")
+                ]
 
             scenes.append(mapped)
         return scenes
@@ -248,6 +290,11 @@ class WorkflowHandler:
                 "aliases": [],
                 "traits": char.get("personality_traits", []),
             }
+
+            # Voice description for TTS
+            voice_desc = char.get("voice_description")
+            if voice_desc:
+                mapped["voiceDescription"] = voice_desc
 
             # Enrich with prompt gen data if available
             prompt_data = prompt_lookup.get(name)
@@ -319,6 +366,40 @@ class WorkflowHandler:
             parts.append(f"Characters: {', '.join(chars)}")
 
         return ". ".join(parts) if parts else "A scene from the story"
+
+    @staticmethod
+    def _step_to_progress(step: str) -> int | None:
+        """Map analyzer step names to 0-100 progress values.
+
+        Step names from the analyzer:
+          preprocessing, chapter_detection, llm_call (single-shot),
+          chapter_N_of_M (chunked map), global_synthesis, parsing,
+          prompt_generation
+        """
+        static_map = {
+            "preprocessing": 5,
+            "chapter_detection": 6,
+            "llm_call": 10,
+            "global_synthesis": 75,
+            "parsing": 78,
+            "prompt_generation": 80,
+        }
+        if step in static_map:
+            return static_map[step]
+
+        # chapter_N_of_M → linear interpolation between 7% and 74%
+        if step.startswith("chapter_"):
+            parts = step.split("_")
+            # Expected format: chapter_3_of_11
+            if len(parts) == 4 and parts[2] == "of":
+                try:
+                    current = int(parts[1])
+                    total = int(parts[3])
+                    return 7 + int(67 * current / total)
+                except (ValueError, ZeroDivisionError):
+                    pass
+
+        return None
 
     async def _publish_progress(
         self,

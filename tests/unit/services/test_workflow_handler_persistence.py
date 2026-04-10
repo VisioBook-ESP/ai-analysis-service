@@ -56,7 +56,10 @@ def mock_analyzer():
                         "lighting": "dim",
                         "weather": "fog",
                         "colors": ["green", "grey"],
-                        "sounds_textures": {"sounds": ["birds"], "textures": ["leaves"]},
+                        "sounds_textures": {
+                            "sounds": ["birds"],
+                            "textures": ["leaves"],
+                        },
                     },
                     "key_events": ["Alice entre dans la forêt"],
                     "objects": ["arbres"],
@@ -64,7 +67,10 @@ def mock_analyzer():
             ],
             "narrative": {"themes": ["journey"], "tone": "mysterious"},
             "sentiment": {"overall": "neutral", "polarity": 0.1},
-            "summary": {"summary": "Alice walks in a forest.", "key_points": ["journey"]},
+            "summary": {
+                "summary": "Alice walks in a forest.",
+                "key_points": ["journey"],
+            },
         }
     )
     return analyzer
@@ -141,7 +147,9 @@ async def test_persists_failure_on_analyzer_exception(
 
 
 @pytest.mark.asyncio
-async def test_publishes_nats_after_persistence(handler, mock_nats, mock_db_client, workflow_data):
+async def test_publishes_nats_after_persistence(
+    handler, mock_nats, mock_db_client, workflow_data
+):
     await handler.handle_workflow_started(workflow_data)
 
     # DB save should have been called before NATS publish

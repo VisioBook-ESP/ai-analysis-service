@@ -12,6 +12,7 @@ def parser():
 # parse() — routing
 # ---------------------------------------------------------------------------
 
+
 class TestParse:
     def test_empty_options_empty_raw_returns_empty(self, parser):
         assert parser.parse({}, {}) == {}
@@ -65,6 +66,7 @@ class TestParse:
 # _parse_characters
 # ---------------------------------------------------------------------------
 
+
 class TestParseCharacters:
     def test_full_valid_character(self, parser):
         char = {
@@ -75,7 +77,9 @@ class TestParseCharacters:
             "emotions": ["joy", "fear"],
             "motivations": ["save the world"],
             "actions": ["runs", "fights"],
-            "relationships": [{"target": "Bob", "type": "friend", "description": "close"}],
+            "relationships": [
+                {"target": "Bob", "type": "friend", "description": "close"}
+            ],
         }
         result = parser._parse_characters([char])
         assert len(result) == 1
@@ -114,11 +118,16 @@ class TestParseCharacters:
 # _parse_relationships
 # ---------------------------------------------------------------------------
 
+
 class TestParseRelationships:
     def test_valid_relationship(self, parser):
         rels = [{"target": "Bob", "type": "enemy", "description": "old rivals"}]
         result = parser._parse_relationships(rels)
-        assert result[0] == {"target": "Bob", "type": "enemy", "description": "old rivals"}
+        assert result[0] == {
+            "target": "Bob",
+            "type": "enemy",
+            "description": "old rivals",
+        }
 
     def test_missing_fields_default_empty_string(self, parser):
         result = parser._parse_relationships([{}])
@@ -137,6 +146,7 @@ class TestParseRelationships:
 # ---------------------------------------------------------------------------
 # _parse_scenes
 # ---------------------------------------------------------------------------
+
 
 class TestParseScenes:
     def test_full_valid_scene(self, parser):
@@ -177,11 +187,20 @@ class TestParseScenes:
 # _parse_setting
 # ---------------------------------------------------------------------------
 
+
 class TestParseSetting:
     def test_valid_setting(self, parser):
-        setting = {"location": "forest", "time_period": "medieval", "time_of_day": "night"}
+        setting = {
+            "location": "forest",
+            "time_period": "medieval",
+            "time_of_day": "night",
+        }
         result = parser._parse_setting(setting)
-        assert result == {"location": "forest", "time_period": "medieval", "time_of_day": "night"}
+        assert result == {
+            "location": "forest",
+            "time_period": "medieval",
+            "time_of_day": "night",
+        }
 
     def test_missing_fields_default_unspecified(self, parser):
         result = parser._parse_setting({})
@@ -197,6 +216,7 @@ class TestParseSetting:
 # ---------------------------------------------------------------------------
 # _parse_atmosphere
 # ---------------------------------------------------------------------------
+
 
 class TestParseAtmosphere:
     def test_valid_atmosphere(self, parser):
@@ -235,6 +255,7 @@ class TestParseAtmosphere:
 # _parse_narrative
 # ---------------------------------------------------------------------------
 
+
 class TestParseNarrative:
     def test_valid_narrative(self, parser):
         narr = {
@@ -262,9 +283,13 @@ class TestParseNarrative:
     def test_not_dict_returns_full_defaults(self, parser):
         result = parser._parse_narrative("invalid")
         assert result == {
-            "themes": [], "tone": "neutral", "style": "",
-            "point_of_view": "", "tension_level": "low",
-            "pacing": "", "literary_devices": [],
+            "themes": [],
+            "tone": "neutral",
+            "style": "",
+            "point_of_view": "",
+            "tension_level": "low",
+            "pacing": "",
+            "literary_devices": [],
         }
 
 
@@ -272,9 +297,15 @@ class TestParseNarrative:
 # _parse_sentiment
 # ---------------------------------------------------------------------------
 
+
 class TestParseSentiment:
     def test_valid_sentiment(self, parser):
-        sent = {"overall": "positive", "polarity": 0.8, "nuances": ["hopeful"], "emotional_arc": "rising"}
+        sent = {
+            "overall": "positive",
+            "polarity": 0.8,
+            "nuances": ["hopeful"],
+            "emotional_arc": "rising",
+        }
         result = parser._parse_sentiment(sent)
         assert result["overall"] == "positive"
         assert result["polarity"] == 0.8
@@ -303,7 +334,12 @@ class TestParseSentiment:
 
     def test_not_dict_returns_full_defaults(self, parser):
         result = parser._parse_sentiment("positive")
-        assert result == {"overall": "neutral", "polarity": 0.0, "nuances": [], "emotional_arc": ""}
+        assert result == {
+            "overall": "neutral",
+            "polarity": 0.0,
+            "nuances": [],
+            "emotional_arc": "",
+        }
 
     def test_nuances_not_list_returns_empty(self, parser):
         result = parser._parse_sentiment({"nuances": "hopeful"})
@@ -321,9 +357,13 @@ class TestParseSentiment:
 # _parse_summary
 # ---------------------------------------------------------------------------
 
+
 class TestParseSummary:
     def test_valid_summary(self, parser):
-        summ = {"summary": "A great story.", "key_points": ["hero wins", "villain falls"]}
+        summ = {
+            "summary": "A great story.",
+            "key_points": ["hero wins", "villain falls"],
+        }
         result = parser._parse_summary(summ)
         assert result["summary"] == "A great story."
         assert result["key_points"] == ["hero wins", "villain falls"]
@@ -342,13 +382,16 @@ class TestParseSummary:
         assert result["key_points"] == []
 
     def test_falsy_key_points_filtered_out(self, parser):
-        result = parser._parse_summary({"key_points": ["valid", "", None, "also valid"]})
+        result = parser._parse_summary(
+            {"key_points": ["valid", "", None, "also valid"]}
+        )
         assert result["key_points"] == ["valid", "also valid"]
 
 
 # ---------------------------------------------------------------------------
 # _ensure_str_list
 # ---------------------------------------------------------------------------
+
 
 class TestEnsureStrList:
     def test_list_of_strings_unchanged(self, parser):

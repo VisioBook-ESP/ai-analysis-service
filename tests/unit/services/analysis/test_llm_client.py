@@ -18,6 +18,7 @@ def _llm_response(content: dict | str) -> dict:
 # chat_completion
 # ---------------------------------------------------------------------------
 
+
 class TestChatCompletion:
     async def test_returns_parsed_json(self, mock_settings):
         payload = {"themes": ["love"], "tone": "melancholic"}
@@ -45,7 +46,9 @@ class TestChatCompletion:
             assert body["response_format"] == {"type": "json_object"}
             await client.close()
 
-    async def test_custom_max_tokens_and_temperature_override_defaults(self, mock_settings):
+    async def test_custom_max_tokens_and_temperature_override_defaults(
+        self, mock_settings
+    ):
         with respx.mock(base_url="http://mock-vllm:8000") as mock:
             route = mock.post("/v1/chat/completions").mock(
                 return_value=httpx.Response(200, json=_llm_response({"ok": True}))
@@ -57,7 +60,9 @@ class TestChatCompletion:
             assert body["temperature"] == 0.9
             await client.close()
 
-    async def test_temperature_zero_is_sent_not_replaced_by_default(self, mock_settings):
+    async def test_temperature_zero_is_sent_not_replaced_by_default(
+        self, mock_settings
+    ):
         """temperature=0 est falsy mais doit être envoyé tel quel."""
         with respx.mock(base_url="http://mock-vllm:8000") as mock:
             route = mock.post("/v1/chat/completions").mock(
@@ -103,7 +108,9 @@ class TestChatCompletion:
     async def test_raises_value_error_when_no_json_extractable(self, mock_settings):
         with respx.mock(base_url="http://mock-vllm:8000") as mock:
             mock.post("/v1/chat/completions").mock(
-                return_value=httpx.Response(200, json=_llm_response("no json here at all"))
+                return_value=httpx.Response(
+                    200, json=_llm_response("no json here at all")
+                )
             )
             client = LLMClient()
             with pytest.raises(ValueError, match="Could not extract valid JSON"):
@@ -124,6 +131,7 @@ class TestChatCompletion:
 # ---------------------------------------------------------------------------
 # health_check
 # ---------------------------------------------------------------------------
+
 
 class TestHealthCheck:
     async def test_returns_true_on_200(self, mock_settings):
@@ -158,6 +166,7 @@ class TestHealthCheck:
 # ---------------------------------------------------------------------------
 # _extract_json (static, testable directement)
 # ---------------------------------------------------------------------------
+
 
 class TestExtractJson:
     def test_extracts_json_with_surrounding_text(self):

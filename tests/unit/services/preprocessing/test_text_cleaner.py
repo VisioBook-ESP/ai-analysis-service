@@ -1,4 +1,3 @@
-import pytest
 
 from src.services.preprocessing.text_cleaner import (
     normalize_unicode,
@@ -13,6 +12,7 @@ from src.services.preprocessing.text_cleaner import (
 # ---------------------------------------------------------------------------
 # normalize_unicode
 # ---------------------------------------------------------------------------
+
 
 class TestNormalizeUnicode:
     def test_nfc_composes_decomposed_character(self):
@@ -30,6 +30,7 @@ class TestNormalizeUnicode:
 # ---------------------------------------------------------------------------
 # strip_control_chars
 # ---------------------------------------------------------------------------
+
 
 class TestStripControlChars:
     def test_removes_null_byte(self):
@@ -54,6 +55,7 @@ class TestStripControlChars:
 # ---------------------------------------------------------------------------
 # replace_smart_quotes
 # ---------------------------------------------------------------------------
+
 
 class TestReplaceSmartQuotes:
     def test_left_double_quote_replaced(self):
@@ -81,6 +83,7 @@ class TestReplaceSmartQuotes:
 # collapse_spaces
 # ---------------------------------------------------------------------------
 
+
 class TestCollapseSpaces:
     def test_multiple_spaces_collapsed_to_one(self):
         assert collapse_spaces("hello   world") == "hello world"
@@ -105,9 +108,11 @@ class TestCollapseSpaces:
 # strip_emojis
 # ---------------------------------------------------------------------------
 
+
 class TestStripEmojis:
     def test_removes_emojis(self):
         from src.services.preprocessing.text_cleaner import strip_emojis
+
         result = strip_emojis("Hello 🌟 world 🎉")
         assert "🌟" not in result
         assert "🎉" not in result
@@ -115,6 +120,7 @@ class TestStripEmojis:
 
     def test_no_emojis_unchanged(self):
         from src.services.preprocessing.text_cleaner import strip_emojis
+
         text = "No emojis here."
         assert strip_emojis(text) == text
 
@@ -122,6 +128,7 @@ class TestStripEmojis:
 # ---------------------------------------------------------------------------
 # mask_pii
 # ---------------------------------------------------------------------------
+
 
 class TestMaskPii:
     def test_masks_email_and_collects_it(self):
@@ -155,6 +162,7 @@ class TestMaskPii:
 # ---------------------------------------------------------------------------
 # basic_clean
 # ---------------------------------------------------------------------------
+
 
 class TestBasicClean:
     def test_empty_text_returns_empty_and_empty_masks(self):

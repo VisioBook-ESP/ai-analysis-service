@@ -68,6 +68,7 @@ class PromptGenerator:
         all_scene_prompts: List[Dict] = []
         all_character_prompts: List[Dict] = []
         all_location_prompts: List[Dict] = []
+        all_audio_prompts: List[Dict] = []
         seen_characters: set = set()
         seen_locations: set = set()
 
@@ -88,7 +89,22 @@ class PromptGenerator:
             )
             parsed = self._parse_response(raw)
 
+            # Offset scene_orders from batch-local to global indices
+            for sp in parsed.get("scene_prompts", []):
+                sp["scene_order"] = sp.get("scene_order", 0) + start
+
+            # Offset source_scene_orders in location_prompts
+            for lp in parsed.get("location_prompts", []):
+                lp["source_scene_orders"] = [
+                    s + start for s in lp.get("source_scene_orders", [])
+                ]
+
+            # Offset audio_prompts scene_order
+            for ap in parsed.get("audio_prompts", []):
+                ap["scene_order"] = ap.get("scene_order", 0) + start
+
             all_scene_prompts.extend(parsed.get("scene_prompts", []))
+            all_audio_prompts.extend(parsed.get("audio_prompts", []))
 
             # Deduplicate characters and locations across batches
             for cp in parsed.get("character_prompts", []):
@@ -107,6 +123,7 @@ class PromptGenerator:
             "scene_prompts": all_scene_prompts,
             "character_prompts": all_character_prompts,
             "location_prompts": all_location_prompts,
+            "audio_prompts": all_audio_prompts,
         }
 
     def _parse_response(self, raw: Dict[str, Any]) -> dict:
@@ -119,6 +136,7 @@ class PromptGenerator:
             "location_prompts": self._parse_location_prompts(
                 raw.get("location_prompts", [])
             ),
+            "audio_prompts": self._parse_audio_prompts(raw.get("audio_prompts", [])),
         }
 
     @staticmethod
@@ -196,6 +214,31 @@ class PromptGenerator:
                         if isinstance(p.get("source_scene_orders"), list)
                         else []
                     ),
+                }
+            )
+        return result
+
+    @staticmethod
+    def _parse_audio_prompts(prompts: Any) -> List[Dict]:
+        if not isinstance(prompts, list):
+            return []
+        result = []
+        for p in prompts:
+            if not isinstance(p, dict):
+                continue
+            ambient = str(p.get("ambient_description", "")).strip()
+            if not ambient:
+                continue
+            result.append(
+                {
+                    "scene_order": int(p.get("scene_order", len(result))),
+                    "ambient_description": ambient,
+                    "sfx": (
+                        [str(s) for s in p["sfx"] if s]
+                        if isinstance(p.get("sfx"), list)
+                        else []
+                    ),
+                    "music_mood": str(p.get("music_mood", "")).strip(),
                 }
             )
         return result

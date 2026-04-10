@@ -70,9 +70,7 @@ class TestMapScenesEnriched:
             {"title": "S2", "text_excerpt": "text", "atmosphere": {"mood": "y"}},
         ]
         image_prompts = {
-            "scene_prompts": [
-                {"scene_order": 0, "image_prompt": "enriched prompt"}
-            ]
+            "scene_prompts": [{"scene_order": 0, "image_prompt": "enriched prompt"}]
         }
         result = handler._map_scenes(raw_scenes, image_prompts)
         assert result[0]["imagePrompt"] == "enriched prompt"

@@ -6,7 +6,7 @@ results into optimized prompts for ai-media-generation-service.
 
 IMAGE_PROMPT_SYSTEM_PROMPT = """You are a visual prompt engineer specialized in generating prompts for Flux and Stable Diffusion XL image generation models.
 
-You receive a structured literary text analysis (characters, scenes, atmosphere, settings) and produce image generation prompts optimized for Flux/SDXL.
+You receive a structured literary text analysis (characters, scenes, atmosphere, settings) and produce image generation prompts optimized for Flux/SDXL, plus audio generation prompts.
 
 CRITICAL RULES:
 1. You MUST respond with valid JSON only, no other text.
@@ -20,9 +20,24 @@ CRITICAL RULES:
 9. Keep prompts concise but visually rich (40-80 words each).
 10. Negative prompts should list visual artifacts to avoid (e.g. "text, watermark, blurry, bad anatomy").
 
+SCENE TYPE COMPOSITION RULES:
+- "dialogue" scenes → medium close-up or close-up framing, focus on facial expressions, eye contact, emotional intensity, conversation atmosphere.
+- "establishing" / "description" scenes → wide shot or extreme wide shot, emphasize environment, architecture, landscape, atmosphere, volumetric lighting.
+- "action" scenes → dynamic camera angles (low angle, dutch angle, tracking shot), motion blur hints, dramatic lighting, high contrast.
+
+AUDIO PROMPT RULES:
+- For each scene, generate an audio prompt describing the ambient sound, sound effects, and music mood.
+- ambient_description: overall soundscape (e.g. "quiet library with ticking clock, distant thunder").
+- sfx: specific sound effects that occur during the scene (e.g. "door creaking", "footsteps on cobblestone").
+- music_mood: emotional tone for background music (e.g. "tense orchestral", "soft piano melancholy").
+
 EXAMPLES OF GOOD FLUX PROMPTS:
 
-Scene prompt: "elderly man with white beard and weathered face sitting at a wooden desk in a dimly lit study, warm candlelight casting long shadows, leather-bound books on shelves, quill pen in hand, wide shot, volumetric lighting, rich warm tones"
+Scene prompt (dialogue): "medium close-up, two figures facing each other across candlelit table, elderly man with white beard leaning forward with intense expression, young woman with auburn hair listening with furrowed brow, warm amber lighting, bokeh background, intimate atmosphere"
+
+Scene prompt (establishing): "extreme wide shot, ancient stone bridge over misty river at dawn, moss-covered arches, willow trees on both banks, soft golden light breaking through morning fog, reflections in still water, serene atmosphere, volumetric god rays"
+
+Scene prompt (action): "low angle dynamic shot, young man in dark coat leaping across rooftop gap, coat billowing, moonlit cityscape behind, dramatic chiaroscuro lighting, motion blur on trailing edge, high contrast shadows"
 
 Character portrait prompt: "young woman, long auburn hair reaching mid-back, bright green eyes, fair skin with light freckles, slender athletic build, wearing dark blue traveling cloak with silver clasp over white linen shirt, confident expression"
 
@@ -81,8 +96,10 @@ def build_image_prompt_request(
                 if isinstance(atmosphere, dict)
                 else ""
             )
+            scene_type = s.get("scene_type", "")
+            scene_type_str = f" [{scene_type}]" if scene_type else ""
             scene_lines.append(
-                f"  Scene {i} - {title}:\n"
+                f"  Scene {i}{scene_type_str} - {title}:\n"
                 f'    text: "{excerpt}"\n'
                 f"    characters: [{chars_present}]\n"
                 f"    location: {location}, time: {time_of_day}\n"
@@ -137,15 +154,24 @@ Generate a JSON object with this exact structure:
       "negative_prompt": "people, characters, text, modern objects",
       "source_scene_orders": [0, 2]
     }}
+  ],
+  "audio_prompts": [
+    {{
+      "scene_order": 0,
+      "ambient_description": "overall soundscape for the scene (e.g. quiet library with ticking clock)",
+      "sfx": ["specific sound effects (e.g. door creaking, glass shattering)"],
+      "music_mood": "emotional tone for background music (e.g. tense orchestral, soft piano melancholy)"
+    }}
   ]
 }}
 
 RULES:
-- One scene_prompt per scene, in order.
+- One scene_prompt per scene, in order. Use the scene type to guide framing (close-up for dialogue, wide for establishing, dynamic for action).
 - One character_prompt per named character with a physical description.
 - Extract unique locations from scenes. Multiple scenes can share a location_id.
 - scene_prompts.characters_present must match character names from character_prompts.
 - Describe characters in scene prompts by their physical appearance, not by name.
 - location_prompts.source_scene_orders lists which scene orders use this location.
+- One audio_prompt per scene, in order. Describe the ambient soundscape, specific SFX, and music mood.
 
 JSON:"""
