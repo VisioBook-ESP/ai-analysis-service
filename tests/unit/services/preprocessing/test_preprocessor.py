@@ -10,7 +10,16 @@ def preprocessor():
     return TextPreprocessor()
 
 
-EXPECTED_KEYS = {"language", "text", "quality", "sentences", "chunks", "masks", "stats", "processing_time_ms"}
+EXPECTED_KEYS = {
+    "language",
+    "text",
+    "quality",
+    "sentences",
+    "chunks",
+    "masks",
+    "stats",
+    "processing_time_ms",
+}
 
 
 class TestTextPreprocessorInit:
@@ -21,7 +30,9 @@ class TestTextPreprocessorInit:
 
 class TestPreprocess:
     def test_returns_all_expected_keys(self, preprocessor):
-        result = preprocessor.preprocess("Alice walked through the forest. She was happy.")
+        result = preprocessor.preprocess(
+            "Alice walked through the forest. She was happy."
+        )
         assert set(result.keys()) == EXPECTED_KEYS
 
     def test_language_is_string(self, preprocessor):
@@ -75,17 +86,23 @@ class TestPreprocess:
         assert "ibans" in result["masks"]
 
     def test_pii_masked_when_option_true(self, preprocessor):
-        result = preprocessor.preprocess("Contact alice@example.com for help.", mask_pii=True)
+        result = preprocessor.preprocess(
+            "Contact alice@example.com for help.", mask_pii=True
+        )
         assert "alice@example.com" not in result["text"]
         assert "alice@example.com" in result["masks"]["emails"]
 
     def test_pii_not_masked_when_option_false(self, preprocessor):
         # mask_pii=True par défaut — passer False pour désactiver le masquage
-        result = preprocessor.preprocess("Contact alice@example.com for help.", mask_pii=False)
+        result = preprocessor.preprocess(
+            "Contact alice@example.com for help.", mask_pii=False
+        )
         assert result["masks"]["emails"] == []
 
     def test_remove_links_option(self, preprocessor):
-        result = preprocessor.preprocess("Visit https://example.com for more.", remove_links=True)
+        result = preprocessor.preprocess(
+            "Visit https://example.com for more.", remove_links=True
+        )
         assert "https://" not in result["text"]
 
     def test_lowercase_option(self, preprocessor):
@@ -115,7 +132,10 @@ class TestPreprocessBatch:
         assert preprocessor.preprocess_batch([]) == []
 
     def test_error_caught_per_item(self, preprocessor):
-        with patch("src.services.preprocessing.preprocessor.noise_score", side_effect=RuntimeError("boom")):
+        with patch(
+            "src.services.preprocessing.preprocessor.noise_score",
+            side_effect=RuntimeError("boom"),
+        ):
             results = preprocessor.preprocess_batch(["some text"])
         assert "error" in results[0]
         assert results[0]["error"] == "boom"
@@ -129,9 +149,13 @@ class TestPreprocessBatch:
             if call_count == 1:
                 raise RuntimeError("first item fails")
             from src.services.preprocessing.quality_scorer import noise_score as real
+
             return real(text)
 
-        with patch("src.services.preprocessing.preprocessor.noise_score", side_effect=failing_noise_score):
+        with patch(
+            "src.services.preprocessing.preprocessor.noise_score",
+            side_effect=failing_noise_score,
+        ):
             results = preprocessor.preprocess_batch(["fail text", "good text"])
         assert "error" in results[0]
         assert "text" in results[1]

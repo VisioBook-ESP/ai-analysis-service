@@ -23,6 +23,7 @@ def clear_spacy_cache():
 # _split_sentences_fallback
 # ---------------------------------------------------------------------------
 
+
 class TestSplitSentencesFallback:
     def test_basic_sentences_split(self):
         result = _split_sentences_fallback("Hello world. How are you?")
@@ -60,6 +61,7 @@ class TestSplitSentencesFallback:
 # split_sentences
 # ---------------------------------------------------------------------------
 
+
 class TestSplitSentences:
     def test_empty_text_returns_empty(self):
         assert split_sentences("") == []
@@ -73,13 +75,18 @@ class TestSplitSentences:
         assert all("text" in s for s in result)
 
     def test_fallback_when_spacy_returns_none(self):
-        with patch("src.services.preprocessing.segmenter._get_spacy_model", return_value=None):
+        with patch(
+            "src.services.preprocessing.segmenter._get_spacy_model", return_value=None
+        ):
             result = split_sentences("Hello world. Test sentence here.", lang="fr")
             assert len(result) >= 1
 
     def test_fallback_when_spacy_raises(self):
         mock_nlp = MagicMock(side_effect=Exception("spacy crash"))
-        with patch("src.services.preprocessing.segmenter._get_spacy_model", return_value=mock_nlp):
+        with patch(
+            "src.services.preprocessing.segmenter._get_spacy_model",
+            return_value=mock_nlp,
+        ):
             result = split_sentences("Hello world. Test sentence.", lang="fr")
             assert len(result) >= 1
 
@@ -100,6 +107,7 @@ class TestSplitSentences:
 # tokenize
 # ---------------------------------------------------------------------------
 
+
 class TestTokenize:
     def test_empty_text_returns_empty(self):
         assert tokenize("") == []
@@ -111,13 +119,18 @@ class TestTokenize:
         assert len(result) > 0
 
     def test_fallback_when_spacy_returns_none(self):
-        with patch("src.services.preprocessing.segmenter._get_spacy_model", return_value=None):
+        with patch(
+            "src.services.preprocessing.segmenter._get_spacy_model", return_value=None
+        ):
             result = tokenize("Hello world.", lang="fr")
             assert len(result) > 0
 
     def test_fallback_when_spacy_raises(self):
         mock_nlp = MagicMock(side_effect=Exception("crash"))
-        with patch("src.services.preprocessing.segmenter._get_spacy_model", return_value=mock_nlp):
+        with patch(
+            "src.services.preprocessing.segmenter._get_spacy_model",
+            return_value=mock_nlp,
+        ):
             result = tokenize("Hello world.", lang="fr")
             assert len(result) > 0
 
@@ -125,6 +138,7 @@ class TestTokenize:
 # ---------------------------------------------------------------------------
 # build_chunks
 # ---------------------------------------------------------------------------
+
 
 class TestBuildChunks:
     def test_empty_text_returns_empty(self):
@@ -143,13 +157,18 @@ class TestBuildChunks:
             assert "token_end" in result[0]
 
     def test_fallback_when_spacy_returns_none(self):
-        with patch("src.services.preprocessing.segmenter._get_spacy_model", return_value=None):
+        with patch(
+            "src.services.preprocessing.segmenter._get_spacy_model", return_value=None
+        ):
             result = build_chunks("Hello world. This is some text.", lang="fr")
             assert isinstance(result, list)
 
     def test_fallback_when_spacy_raises(self):
         mock_nlp = MagicMock(side_effect=Exception("crash"))
-        with patch("src.services.preprocessing.segmenter._get_spacy_model", return_value=mock_nlp):
+        with patch(
+            "src.services.preprocessing.segmenter._get_spacy_model",
+            return_value=mock_nlp,
+        ):
             result = build_chunks("Hello world. This is some text.", lang="fr")
             assert isinstance(result, list)
 
@@ -157,6 +176,7 @@ class TestBuildChunks:
 # ---------------------------------------------------------------------------
 # _build_chunks_fallback
 # ---------------------------------------------------------------------------
+
 
 class TestBuildChunksFallback:
     def test_empty_text_returns_empty(self):
@@ -199,6 +219,7 @@ class TestBuildChunksFallback:
 # ---------------------------------------------------------------------------
 # _get_spacy_model
 # ---------------------------------------------------------------------------
+
 
 class TestGetSpacyModel:
     def test_returns_model_or_none_for_fr(self):

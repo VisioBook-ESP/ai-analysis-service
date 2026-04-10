@@ -1,6 +1,9 @@
 from unittest.mock import patch
 
-from src.services.preprocessing.language_detector import detect_language, is_language_supported
+from src.services.preprocessing.language_detector import (
+    detect_language,
+    is_language_supported,
+)
 
 
 class TestDetectLanguage:
@@ -26,23 +29,40 @@ class TestDetectLanguage:
         assert detect_language(text) == "en"
 
     def test_exception_in_detect_returns_default(self):
-        with patch("src.services.preprocessing.language_detector.detect", side_effect=Exception("fail")):
-            result = detect_language("some longer text for detection here ok now yes", default="fallback")
+        with patch(
+            "src.services.preprocessing.language_detector.detect",
+            side_effect=Exception("fail"),
+        ):
+            result = detect_language(
+                "some longer text for detection here ok now yes", default="fallback"
+            )
             assert result == "fallback"
 
     def test_unknown_language_returns_first_two_chars(self):
-        with patch("src.services.preprocessing.language_detector.detect", return_value="de"):
-            result = detect_language("Ein sehr langer Text der auf Deutsch geschrieben wurde hier ja.")
+        with patch(
+            "src.services.preprocessing.language_detector.detect", return_value="de"
+        ):
+            result = detect_language(
+                "Ein sehr langer Text der auf Deutsch geschrieben wurde hier ja."
+            )
             assert result == "de"
 
     def test_fr_prefix_returns_fr(self):
-        with patch("src.services.preprocessing.language_detector.detect", return_value="fr-CA"):
-            result = detect_language("Un texte assez long pour être détecté correctement ici.")
+        with patch(
+            "src.services.preprocessing.language_detector.detect", return_value="fr-CA"
+        ):
+            result = detect_language(
+                "Un texte assez long pour être détecté correctement ici."
+            )
             assert result == "fr"
 
     def test_en_prefix_returns_en(self):
-        with patch("src.services.preprocessing.language_detector.detect", return_value="en-GB"):
-            result = detect_language("A text that is long enough to be detected correctly here.")
+        with patch(
+            "src.services.preprocessing.language_detector.detect", return_value="en-GB"
+        ):
+            result = detect_language(
+                "A text that is long enough to be detected correctly here."
+            )
             assert result == "en"
 
 

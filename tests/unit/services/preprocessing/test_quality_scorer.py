@@ -1,4 +1,3 @@
-import pytest
 
 from src.services.preprocessing.quality_scorer import noise_score, assess_quality
 
@@ -6,6 +5,7 @@ from src.services.preprocessing.quality_scorer import noise_score, assess_qualit
 # ---------------------------------------------------------------------------
 # noise_score
 # ---------------------------------------------------------------------------
+
 
 class TestNoiseScore:
     def test_empty_text_returns_all_zeros(self):
@@ -46,7 +46,10 @@ class TestNoiseScore:
     def test_url_heavy_text_raises_url_ratio(self):
         text_with_urls = " ".join(f"https://example{i}.com" for i in range(5))
         text_clean = "Some regular text without any URLs or links whatsoever."
-        assert noise_score(text_with_urls)["url_ratio"] > noise_score(text_clean)["url_ratio"]
+        assert (
+            noise_score(text_with_urls)["url_ratio"]
+            > noise_score(text_clean)["url_ratio"]
+        )
 
     def test_punct_heavy_text_raises_punct_ratio(self):
         heavy = "!!!...;;;???!!!...;;;???!!!"
@@ -55,7 +58,14 @@ class TestNoiseScore:
 
     def test_returns_all_expected_keys(self):
         result = noise_score("some text")
-        expected_keys = {"score", "non_letter_ratio", "punct_ratio", "upper_ratio", "avg_sent_len", "url_ratio"}
+        expected_keys = {
+            "score",
+            "non_letter_ratio",
+            "punct_ratio",
+            "upper_ratio",
+            "avg_sent_len",
+            "url_ratio",
+        }
         assert set(result.keys()) == expected_keys
 
     def test_score_values_are_rounded(self):
@@ -74,6 +84,7 @@ class TestNoiseScore:
 # ---------------------------------------------------------------------------
 # assess_quality
 # ---------------------------------------------------------------------------
+
 
 class TestAssessQuality:
     def test_returns_valid_label(self):

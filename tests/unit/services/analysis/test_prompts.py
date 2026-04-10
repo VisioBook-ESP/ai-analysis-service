@@ -52,11 +52,22 @@ class TestBuildAnalysisPrompt:
     def test_all_options_true_includes_all_sections(self):
         opts = {"characters": True, "scenes": True, "narrative": True, "summary": True}
         prompt = build_analysis_prompt("text", "en", opts)
-        for key in ['"characters"', '"scenes"', '"narrative"', '"sentiment"', '"summary"']:
+        for key in [
+            '"characters"',
+            '"scenes"',
+            '"narrative"',
+            '"sentiment"',
+            '"summary"',
+        ]:
             assert key in prompt
 
     def test_options_false_excludes_sections(self):
-        opts = {"characters": False, "scenes": False, "narrative": False, "summary": False}
+        opts = {
+            "characters": False,
+            "scenes": False,
+            "narrative": False,
+            "summary": False,
+        }
         prompt = build_analysis_prompt("text", "fr", opts)
         assert '"characters"' not in prompt
         assert '"scenes"' not in prompt

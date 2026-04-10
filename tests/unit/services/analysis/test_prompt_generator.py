@@ -184,4 +184,115 @@ class TestGenerate:
             "scene_prompts": [],
             "character_prompts": [],
             "location_prompts": [],
+            "audio_prompts": [],
         }
+
+
+# ---------------------------------------------------------------------------
+# generate() — batched call (>15 scenes)
+# ---------------------------------------------------------------------------
+
+
+class SequentialFakeLLMClient:
+    """Fake LLM client that returns a different response per call."""
+
+    def __init__(self, responses: list[dict]):
+        self.responses = responses
+        self.calls: list[dict] = []
+        self._call_index = 0
+
+    async def chat_completion(self, **kwargs) -> dict:
+        self.calls.append(kwargs)
+        resp = self.responses[self._call_index]
+        self._call_index += 1
+        return resp
+
+
+class TestBatchedCall:
+    @pytest.mark.asyncio
+    async def test_batched_call_triggered_for_many_scenes(self):
+        """20 scenes should trigger 2 LLM calls (batches of 15 + 5)."""
+        scenes = [{"title": f"Scene {i}"} for i in range(20)]
+        empty_response = {
+            "scene_prompts": [{"scene_order": 0, "image_prompt": "a scene"}],
+            "character_prompts": [],
+            "location_prompts": [],
+        }
+        client = SequentialFakeLLMClient([empty_response, empty_response])
+        gen = PromptGenerator(client)
+        await gen.generate({"scenes": scenes, "characters": []})
+        assert len(client.calls) == 2
+
+    @pytest.mark.asyncio
+    async def test_batched_scene_orders_are_globally_unique(self):
+        """Scene orders must be globally unique, not 0-indexed per batch."""
+        scenes = [{"title": f"Scene {i}"} for i in range(20)]
+
+        batch1_response = {
+            "scene_prompts": [
+                {"scene_order": i, "image_prompt": f"batch1 scene {i}"}
+                for i in range(15)
+            ],
+            "character_prompts": [],
+            "location_prompts": [],
+        }
+        batch2_response = {
+            "scene_prompts": [
+                {"scene_order": i, "image_prompt": f"batch2 scene {i}"}
+                for i in range(5)
+            ],
+            "character_prompts": [],
+            "location_prompts": [],
+        }
+
+        client = SequentialFakeLLMClient([batch1_response, batch2_response])
+        gen = PromptGenerator(client)
+        result = await gen.generate({"scenes": scenes, "characters": []})
+
+        orders = [sp["scene_order"] for sp in result["scene_prompts"]]
+        assert orders == list(range(20))
+        assert len(set(orders)) == 20
+
+    @pytest.mark.asyncio
+    async def test_batched_location_source_scene_orders_offset(self):
+        """source_scene_orders in location_prompts must be offset by batch start."""
+        scenes = [{"title": f"Scene {i}"} for i in range(20)]
+
+        batch1_response = {
+            "scene_prompts": [
+                {"scene_order": i, "image_prompt": f"scene {i}"} for i in range(15)
+            ],
+            "character_prompts": [],
+            "location_prompts": [
+                {
+                    "location_id": "forest",
+                    "name": "Forest",
+                    "description_prompt": "dark forest",
+                    "source_scene_orders": [0, 5, 10],
+                }
+            ],
+        }
+        batch2_response = {
+            "scene_prompts": [
+                {"scene_order": i, "image_prompt": f"scene {i}"} for i in range(5)
+            ],
+            "character_prompts": [],
+            "location_prompts": [
+                {
+                    "location_id": "castle",
+                    "name": "Castle",
+                    "description_prompt": "stone castle",
+                    "source_scene_orders": [1, 3],
+                }
+            ],
+        }
+
+        client = SequentialFakeLLMClient([batch1_response, batch2_response])
+        gen = PromptGenerator(client)
+        result = await gen.generate({"scenes": scenes, "characters": []})
+
+        locs = {lp["location_id"]: lp for lp in result["location_prompts"]}
+        # Batch 1: start=0, no offset
+        assert locs["forest"]["source_scene_orders"] == [0, 5, 10]
+        # Batch 2: start=15, offset applied
+        assert locs["castle"]["source_scene_orders"] == [16, 18]
