@@ -26,7 +26,7 @@ class PromptGenerator:
         self.llm_client = llm_client
         settings = get_settings()
         self.temperature = settings.prompt_gen_temperature
-        self.max_tokens = settings.prompt_gen_max_tokens
+        self.max_tokens = settings.vllm_max_tokens
 
     async def generate(
         self,
