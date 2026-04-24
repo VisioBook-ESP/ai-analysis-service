@@ -32,10 +32,10 @@ services:
       "--gpu-memory-utilization", "0.90",
       "--kv-cache-dtype", "fp8"
       #-----2 GPU SETUP-----
-      #"--tensor-parallel-size", "2",
-      #"--swap-space", "4",
-      #"--max-model-len", "131072",
-      #"--gpu-memory-utilization", "0.85"
+      # "--tensor-parallel-size", "2",
+      # "--swap-space", "4",
+      # "--max-model-len", "131072",
+      # "--gpu-memory-utilization", "0.85"
     ]
     restart: unless-stopped
     healthcheck:
