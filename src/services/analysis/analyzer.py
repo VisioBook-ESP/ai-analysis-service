@@ -25,14 +25,8 @@ logger = logging.getLogger(__name__)
 
 StepCallback = Callable[[str], Awaitable[None]]
 
-# Per-chapter map output budget (tokens) — legacy single-pass fallback
-_MAP_MAX_TOKENS = 4096
-# Pass 1 (dialogue/structure extraction) output budget
-_PASS1_MAX_TOKENS = 4096
-# Pass 2 (visual scene composition) output budget
-_PASS2_MAX_TOKENS = 4096
-# Global reduce output budget (tokens)
-_REDUCE_MAX_TOKENS = 8192
+# All LLM calls use settings.vllm_max_tokens (default 16384, env VLLM_MAX_TOKENS)
+# by not passing max_tokens to llm_client.chat_completion().
 
 
 class AnalysisOptions:
@@ -230,7 +224,6 @@ class Analyzer:
                         total,
                         language,
                     ),
-                    max_tokens=_PASS1_MAX_TOKENS,
                 )
                 logger.info(
                     "Chapter %d/%d Pass 1: %d dialogues, %d narrative blocks, %d audio cues",
@@ -261,7 +254,6 @@ class Analyzer:
                             total,
                             language,
                         ),
-                        max_tokens=_PASS2_MAX_TOKENS,
                     )
                     scenes_from_chapter = pass2_result.get("scenes", [])
                     logger.info(
@@ -311,7 +303,6 @@ class Analyzer:
                             language,
                             options,
                         ),
-                        max_tokens=_MAP_MAX_TOKENS,
                     )
                     chapter_results.append(result)
                     scenes_from_chapter = result.get("scenes", [])
@@ -356,7 +347,6 @@ class Analyzer:
             reduced = await self.llm_client.chat_completion(
                 system_prompt=REDUCE_SYSTEM_PROMPT,
                 user_prompt=build_reduce_prompt(chapter_results, language, options),
-                max_tokens=_REDUCE_MAX_TOKENS,
             )
         except Exception as e:
             logger.error(f"Reduce call failed: {e}")
