@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     vllm_model_name: str = "mistralai/Ministral-3-3B-Instruct-2512-BF16"
     vllm_api_key: str = "EMPTY"
     vllm_timeout: float = 600.0
-    vllm_max_tokens: int = 16384
+    vllm_max_tokens: int = 32768
     vllm_temperature: float = 0.1
     vllm_top_p: float = 0.95
 
@@ -29,7 +29,6 @@ class Settings(BaseSettings):
     # Prompt generation (second LLM call for Flux/SDXL prompts)
     prompt_gen_enabled: bool = True
     prompt_gen_temperature: float = 0.35
-    prompt_gen_max_tokens: int = 2048
 
     # NATS JetStream
     NATS_URL: str = "nats://nats.visiobook-namespace.svc.cluster.local:4222"
